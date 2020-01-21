@@ -31,7 +31,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 public class Robot extends TimedRobot {
     // Constantes
     final double VEL_CORREA = 0.40;
-    final double VEL_SHOOTER = 0.35;
+    final double VEL_SHOOTER = 0.60;
     final double VEL_RECOGEDOR = 0.40;
 
     // ---------------- MOTORES ------------ //
@@ -50,6 +50,8 @@ public class Robot extends TimedRobot {
 
     // ---------------- FIN CONTROLES ------------ //
 
+    // ----------------- VARIABLES ---------------//
+    private boolean recogedorToogle = false;
     private boolean CorreaToggle = false;
     private boolean shooterToggle = false;
 
@@ -103,28 +105,29 @@ public class Robot extends TimedRobot {
 
         // SHOOTER BUTTON
         if (ControlDriver.getXButtonPressed()) {
-            // ShooterBoton();
+            shooter_encendido_boton();
         }
 
     }
-//------------------------------------------
-    
+    // ------------------------------------------
+
     /* ------ METODOS PARA EL RECOGEDOR --- */
 
-    private void acelerar_recogedor(double vel){
-        recogedorTalon1.set(ControlMode.PercentOutput, vel);
-        recogedorTalon2.set(ControlMode.PercentOutput, vel);
+    private void acelerar_recogedor(double vel) {
+        // recogedorTalon1.set(ControlMode.PercentOutput, vel);
+        // recogedorTalon2.set(ControlMode.PercentOutput, vel);
 
     }
-    private void detener_recogedor(){
+
+    private void detener_recogedor() {
         acelerar_recogedor(0.0);
     }
 
-    private void recogedor_entrando(){
+    private void recogedor_entrando() {
         acelerar_recogedor(VEL_RECOGEDOR);
     }
 
-    private void recogedor_saliendo(){
+    private void recogedor_saliendo() {
         acelerar_recogedor(-1 * VEL_RECOGEDOR);
     }
 
@@ -135,17 +138,17 @@ public class Robot extends TimedRobot {
         } else {
             detener_recogedor();
             recogedorToogle = false;
-        }   
+        }
     }
 
-    private void recogedor_sacando_boton() {
+    private void recogedor_saliendo_boton() {
         if (recogedorToogle == false) { // ya esta apagado
             recogedorToogle = true; // corriendo
-            recogedor_sacando();
+            recogedor_saliendo();
         } else {
             detener_recogedor();
             recogedorToogle = false;
-        }   
+        }
     }
 
     /* ------ METODOS PARA LA CORREA --- */
@@ -160,14 +163,13 @@ public class Robot extends TimedRobot {
 
     private void detener_correa() {
         acelerar_Correa(0.0);
-    }   
+    }
 
     private void acelerar_Correa(double vel) {
         correaTalon1.set(ControlMode.PercentOutput, vel);
         correaTalon2.set(ControlMode.PercentOutput, vel);
 
     }
-
 
     private void correa_bajando_boton() {
         if (CorreaToggle == false) { // ya esta apagado
@@ -201,12 +203,11 @@ public class Robot extends TimedRobot {
     }
 
     private void acelerar_shooter(double vel) {
-        leftShooterTalon.set(ControlMode.PercentOutput, vel);
-        rightShooterTalon.set(ControlMode.PercentOutput, vel);
+        leftShooterTalon.set(ControlMode.PercentOutput, -vel);
+        rightShooterTalon.set(ControlMode.PercentOutput, -vel);
     }
 
-    private void ShooterBoton() {
-        double vel_shooter = 0.6;
+    private void shooter_encendido_boton() {
 
         if (shooterToggle == true) {
             shooterToggle = false;
@@ -214,7 +215,7 @@ public class Robot extends TimedRobot {
             shooterToggle = true;
         }
         if (shooterToggle == true) {
-            acelerar_shooter(vel_shooter);
+            acelerar_shooter(VEL_SHOOTER);
 
         }
         if (shooterToggle == false) {
@@ -231,7 +232,5 @@ public class Robot extends TimedRobot {
         leftTalon.set(ControlMode.PercentOutput, vel_left);
         rightTalon.set(ControlMode.PercentOutput, vel_right);
     }
-
-    
 
 }
