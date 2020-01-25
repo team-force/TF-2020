@@ -36,13 +36,13 @@ public class Robot extends TimedRobot {
 
     // ---------------- MOTORES ------------ //
     private TalonSRX leftTalon = new TalonSRX(1);
-    private TalonSRX rightTalon = new TalonSRX(7);
+    private TalonSRX rightTalon = new TalonSRX(2);
     // private TalonSRX RecogedorTalon2 = new TalonSRX(5);
-    // private TalonSRX RecogedorTalon1 = new TalonSRX(6);
-    private TalonSRX correaTalon1 = new TalonSRX(5);
-    private TalonSRX correaTalon2 = new TalonSRX(6);
-    private TalonSRX leftShooterTalon = new TalonSRX(4);
-    private TalonSRX rightShooterTalon = new TalonSRX(8);
+    private TalonSRX BrazoTalon = new TalonSRX(6);
+    // private TalonSRX correaTalon1 = new TalonSRX(5);
+    // private TalonSRX correaTalon2 = new TalonSRX(6);
+    // private TalonSRX leftShooterTalon = new TalonSRX(4);
+    // private TalonSRX rightShooterTalon = new TalonSRX(8);
     // ---------------- FIN MOTORES ------------ //
 
     // ---------------- CONTROLES ------------ //
@@ -62,7 +62,7 @@ public class Robot extends TimedRobot {
 
     // ------- Variables para el Shooter ----
     private double angulo_shooter = 40; // en Grados para entender
-    private double radianes_shooter = angulo_shooter / 180 * 01;
+    private double radianes_shooter = angulo_shooter / 180 * 3.1415;
 
     @Override
     public void robotInit() {
@@ -94,14 +94,14 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
 
+        // Leer el Gamepad (botones, joysticks (tal vez), etc)
+
         // recogedor toggle ver.
         if (ControlDriver.getYButtonPressed()) {
             correa_bajando_boton(); // Regurgitar
         }
 
-        if (ControlDriver.getAButtonPressed()) {
-            correa_subiendo_boton(); // Recoger
-        }
+        brazo_subiendo_boton(); // Recoger
 
         // SHOOTER BUTTON
         if (ControlDriver.getXButtonPressed()) {
@@ -110,6 +110,11 @@ public class Robot extends TimedRobot {
 
     }
     // ------------------------------------------
+
+    /* ------- Metodos para el brazo ----- */
+    private void brazo_subiendo_boton();
+
+    private void brazo_subiendo();
 
     /* ------ METODOS PARA EL RECOGEDOR --- */
 
