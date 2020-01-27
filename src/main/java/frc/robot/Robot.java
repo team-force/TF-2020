@@ -10,8 +10,10 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PWMVictorSPX;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 // import edu.wpi.first.wpilibj.Joystick;
@@ -50,6 +52,18 @@ public class Robot extends TimedRobot {
 
     // ---------------- FIN CONTROLES ------------ //
 
+    // ---------------- COMPRESOR --------------- //
+    
+    private Compressor mainCompressor = new Compressor();
+
+    // ------------- FIN DE COMPRESOR ----------- //
+
+    // ---------------- SOLENOIDES --------------- //
+
+    private Solenoid empujarPeSolenoid = new Solenoid(0);
+
+    // ------------- FIN DE SOLENOIDES ----------- //
+
     // ----------------- VARIABLES ---------------//
     private boolean recogedorToogle = false;
     private boolean CorreaToggle = false;
@@ -73,6 +87,7 @@ public class Robot extends TimedRobot {
         // DifferentialDrive m_robotDrive = new DifferentialDrive(leftTalon,
         // rightTalon);
         m_stick = new Joystick(2);
+        initNeumatics();
     }
 
     @Override
@@ -106,6 +121,10 @@ public class Robot extends TimedRobot {
         // SHOOTER BUTTON
         if (ControlDriver.getXButtonPressed()) {
             shooter_encendido_boton();
+        }
+
+        if(ControlDriver.getAButtonPressed()){
+            empujar_pelota();
         }
 
     }
@@ -231,6 +250,10 @@ public class Robot extends TimedRobot {
     private void acelerar_robot(double vel_left, double vel_right) {
         leftTalon.set(ControlMode.PercentOutput, vel_left);
         rightTalon.set(ControlMode.PercentOutput, vel_right);
+    }
+
+     public void initNeumatics() {
+        mainCompressor.setClosedLoopControl(true);
     }
 
 }
