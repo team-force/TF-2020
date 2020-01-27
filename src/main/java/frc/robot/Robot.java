@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+import java.util.concurrent.TimeUnit;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
@@ -54,7 +56,7 @@ public class Robot extends TimedRobot {
 
     // ---------------- COMPRESOR --------------- //
     
-    private Compressor mainCompressor = new Compressor();
+    private Compressor mainCompressor = new Compressor(0);
 
     // ------------- FIN DE COMPRESOR ----------- //
 
@@ -122,11 +124,7 @@ public class Robot extends TimedRobot {
         if (ControlDriver.getXButtonPressed()) {
             shooter_encendido_boton();
         }
-
-        if(ControlDriver.getAButtonPressed()){
-            empujar_pelota();
-        }
-
+        
     }
     // ------------------------------------------
 
@@ -228,19 +226,44 @@ public class Robot extends TimedRobot {
 
     private void shooter_encendido_boton() {
 
-        if (shooterToggle == true) {
-            shooterToggle = false;
-        } else if (shooterToggle == false) {
-            shooterToggle = true;
-        }
-        if (shooterToggle == true) {
+        // if (shooterToggle == true) {
+        //     shooterToggle = false;
+        // } else if (shooterToggle == false) {
+        //     shooterToggle = true;
+        // }
+        // if (shooterToggle == true) {
             acelerar_shooter(VEL_SHOOTER);
-
-        }
-        if (shooterToggle == false) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            empujar_pelota();
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
             detener_shooter();
+        // }
+        // if (shooterToggle == false) {
+        //     detener_shooter();
 
+        // }
+    }
+
+    /* METODO PARA EMPUJAR PELOTA */
+    public void empujar_pelota(){
+        empujarPeSolenoid.set(true);
+        try {
+            TimeUnit.MILLISECONDS.sleep(50);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
+        empujarPeSolenoid.set(false);
     }
 
     private void avanzar_por_velocidad(double vel) {
