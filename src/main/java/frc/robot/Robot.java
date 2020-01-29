@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+
 /**
  * This is a demo program showing how to use Mecanum control with the RobotDrive
  * class.
@@ -61,10 +62,7 @@ public class Robot extends TimedRobot {
     NetworkTableEntry tyLimelight = table.getEntry("Ty");
     NetworkTableEntry taLimelight = table.getEntry("Ta");
 
-
     // ---------------- Limelight ------------ //
-
-    
 
     // ---------------- CONTROLES ------------ //
     private XboxController ControlDriver = new XboxController(2);
@@ -72,7 +70,7 @@ public class Robot extends TimedRobot {
     // ---------------- FIN CONTROLES ------------ //
 
     // ---------------- COMPRESOR --------------- //
-    
+
     private Compressor mainCompressor = new Compressor(0);
 
     // ------------- FIN DE COMPRESOR ----------- //
@@ -106,7 +104,7 @@ public class Robot extends TimedRobot {
         // DifferentialDrive m_robotDrive = new DifferentialDrive(leftTalon,
         // rightTalon);
         m_stick = new Joystick(2);
-        initNeumatics();
+        // initNeumatics();
     }
 
     @Override
@@ -127,21 +125,22 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
-        
-        // recogedor toggle ver.
-        if (ControlDriver.getYButtonPressed()) {
-            correa_bajando_boton(); // Regurgitar
-        }
+        /*
+         * // recogedor toggle ver. if (ControlDriver.getYButtonPressed()) {
+         * correa_bajando_boton(); // Regurgitar }
+         * 
+         * if (ControlDriver.getAButtonPressed()) { correa_subiendo_boton(); // Recoger
+         * }
+         * 
+         * // SHOOTER BUTTON if (ControlDriver.getXButtonPressed()) {
+         * shooter_encendido_boton(); }
+         */
 
-        if (ControlDriver.getAButtonPressed()) {
-            correa_subiendo_boton(); // Recoger
-        }
-
-        // SHOOTER BUTTON
+        // Boton para activar alinearse
         if (ControlDriver.getXButtonPressed()) {
-            shooter_encendido_boton();
+            camara_alineando_boton(); // Siguiendo mismo estilo
         }
-        
+
     }
     // ------------------------------------------
 
@@ -244,35 +243,35 @@ public class Robot extends TimedRobot {
     private void shooter_encendido_boton() {
 
         // if (shooterToggle == true) {
-        //     shooterToggle = false;
+        // shooterToggle = false;
         // } else if (shooterToggle == false) {
-        //     shooterToggle = true;
+        // shooterToggle = true;
         // }
         // if (shooterToggle == true) {
-            acelerar_shooter(VEL_SHOOTER);
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            empujar_pelota();
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            detener_shooter();
+        acelerar_shooter(VEL_SHOOTER);
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        empujar_pelota();
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        detener_shooter();
         // }
         // if (shooterToggle == false) {
-        //     detener_shooter();
+        // detener_shooter();
 
         // }
     }
 
     /* METODO PARA EMPUJAR PELOTA */
-    public void empujar_pelota(){
+    public void empujar_pelota() {
         empujarPeSolenoid.set(true);
         try {
             TimeUnit.MILLISECONDS.sleep(50);
@@ -291,22 +290,64 @@ public class Robot extends TimedRobot {
         leftTalon.set(ControlMode.PercentOutput, vel_left);
         rightTalon.set(ControlMode.PercentOutput, vel_right);
     }
+
     // METODOS PARA LA NEUMATICA
-     public void initNeumatics() {
+    public void initNeumatics() {
         mainCompressor.setClosedLoopControl(true);
     }
 
-    //METODOS PARA LA CAMARA
+    // METODOS PARA LA CAMARA
 
-    private double tx(){
+    private double tx() {
         return txLimelight.getDouble(0.0);
     }
 
-    private double ty(){
+    private double ty() {
         return tyLimelight.getDouble(0.0);
     }
 
-    private double ta(){
+    private double ta() {
         return taLimelight.getDouble(0.0);
+    }
+
+    // ACCIONES CON LA CAMARA
+
+    /*
+     * Alinea el robot con un objetivo haciendo que el centro del objetivo se
+     * localice en el centro (horizontal) de la imagen.
+     * 
+     * Se toma el valor tx como "error" y se usa para calcular una Potencia de giro
+     * para pasarle a los motores. El valor de esta Potencia es PROPORCIONAL al
+     * valor de tx. La proporcion es dada por la constante KC.
+     * 
+     * Esto es, mientras más separado el objetivo del centro, más fuerte se   enta
+     * girar el robot, hasta llegar a Potencia cero (alineado).
+     */
+    private void alinear_con_camara() {
+        // Este metodo se ejecuta una vez en cada periodo de TeleOp
+
+        // Leer el "error" (valor tx, o "delta x")
+        double Dx = tx();
+        // Potencia deseada segun el error
+        double P = KC * Dx; // KC debe ser creada y definida con un valor adecuado
+
+        /*
+         * Hay que convertir esta potencia de giro en las potencias (velocidades) que se
+         * le piden a los motores En este caso, debera ser la misma para ambos, pero con
+         * signo diferente.
+         */
+        girar_robot(P); // (NO EXISTE) ESTO DEBE PROBARSE
+
+    }
+
+    // ESTADOS CON LA CAMARA
+    private void camara_alineando_boton() {
+        if (CorreaToggle == false) { // Entrar al estado
+            CorreaToggle = true; // Activar estado
+            alinear_con_camara();
+        } else { // Salir del estado
+            detener_robot(); // NO EXISTE TODAVIA (PUEDE SER OTRA)
+            CorreaToggle = false;
+        }
     }
 }
