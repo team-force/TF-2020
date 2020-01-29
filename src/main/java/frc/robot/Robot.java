@@ -27,6 +27,12 @@ import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
+//para poder utilizar el imelight a traves del networktable
+
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 /**
  * This is a demo program showing how to use Mecanum control with the RobotDrive
  * class.
@@ -48,6 +54,17 @@ public class Robot extends TimedRobot {
     private TalonSRX leftShooterTalon = new TalonSRX(4);
     private TalonSRX rightShooterTalon = new TalonSRX(8);
     // ---------------- FIN MOTORES ------------ //
+
+    // ---------------- Limelight ------------ //
+    NetworkTable table = NetworkTableInstance.getDefault().getTable("Limelight");
+    NetworkTableEntry txLimelight = table.getEntry("Tx");
+    NetworkTableEntry tyLimelight = table.getEntry("Ty");
+    NetworkTableEntry taLimelight = table.getEntry("Ta");
+
+
+    // ---------------- Limelight ------------ //
+
+    
 
     // ---------------- CONTROLES ------------ //
     private XboxController ControlDriver = new XboxController(2);
@@ -110,7 +127,7 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
-
+        
         // recogedor toggle ver.
         if (ControlDriver.getYButtonPressed()) {
             correa_bajando_boton(); // Regurgitar
@@ -274,9 +291,22 @@ public class Robot extends TimedRobot {
         leftTalon.set(ControlMode.PercentOutput, vel_left);
         rightTalon.set(ControlMode.PercentOutput, vel_right);
     }
-
+    // METODOS PARA LA NEUMATICA
      public void initNeumatics() {
         mainCompressor.setClosedLoopControl(true);
     }
 
+    //METODOS PARA LA CAMARA
+
+    private double tx(){
+        return txLimelight.getDouble(0.0);
+    }
+
+    private double ty(){
+        return tyLimelight.getDouble(0.0);
+    }
+
+    private double ta(){
+        return taLimelight.getDouble(0.0);
+    }
 }
