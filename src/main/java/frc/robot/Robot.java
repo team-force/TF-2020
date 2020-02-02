@@ -7,6 +7,7 @@
 
 package frc.robot;
 
+import java.lang.Math;
 import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -45,6 +46,9 @@ public class Robot extends TimedRobot {
     final double VEL_SHOOTER = 0.60;
     final double VEL_RECOGEDOR = 0.40;
 
+    final double Kp = 0.05;
+    final double Ki = 0.002;
+
     // ---------------- MOTORES ------------ //
     private TalonSRX leftTalon = new TalonSRX(1);
     private TalonSRX rightTalon = new TalonSRX(7);
@@ -57,10 +61,10 @@ public class Robot extends TimedRobot {
     // ---------------- FIN MOTORES ------------ //
 
     // ---------------- Limelight ------------ //
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("Limelight");
-    NetworkTableEntry txLimelight = table.getEntry("Tx");
-    NetworkTableEntry tyLimelight = table.getEntry("Ty");
-    NetworkTableEntry taLimelight = table.getEntry("Ta");
+    NetworkTable table;
+    NetworkTableEntry txLimelight;
+    NetworkTableEntry tyLimelight;
+    NetworkTableEntry taLimelight;
 
     // ---------------- Limelight ------------ //
 
@@ -91,6 +95,13 @@ public class Robot extends TimedRobot {
 
     private double startTime;
 
+    // ---- Variables par Limelight ----- //
+    private double Val_Dx = 0.0;
+    private double Val_P = 0.0;
+    private boolean AlineandoToggle = false;
+    private double tx_mem = 0.0;
+    private double align_mem = 0.0;
+
     // ------- Variables para el Shooter ----
     private double angulo_shooter = 40; // en Grados para entender
     private double radianes_shooter = angulo_shooter / 180 * 01;
@@ -105,6 +116,11 @@ public class Robot extends TimedRobot {
         // rightTalon);
         m_stick = new Joystick(2);
         // initNeumatics();
+
+        table = NetworkTableInstance.getDefault().getTable("limelight");
+        txLimelight = table.getEntry("tx");
+        // tyLimelight = table.getEntry("ty");
+        // taLimelight = table.getEntry("ta");
     }
 
     @Override
@@ -125,6 +141,13 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
+
+        // table = NetworkTableInstance.getDefault().getTable("limelight");
+        // txLimelight = table.getEntry("tx");
+        // tyLimelight = table.getEntry("ty");
+        // taLimelight = table.getEntry("ta");
+
+        double Tx = txLimelight.getDouble(78.0);
         /*
          * // recogedor toggle ver. if (ControlDriver.getYButtonPressed()) {
          * correa_bajando_boton(); // Regurgitar }
@@ -137,10 +160,21 @@ public class Robot extends TimedRobot {
          */
 
         // Boton para activar alinearse
+        // Como hacer que el boton haga que aliner_con_camara se corra cada vez que
+        // entramos a TeleopPeriodic
         if (ControlDriver.getXButtonPressed()) {
             camara_alineando_boton(); // Siguiendo mismo estilo
         }
 
+        // ----------- REVISAR ESTADOS -----------
+        if (AlineandoToggle == true) {
+            alinear_con_camara(); // Como es una accion: hace algo breve y sale. Si ya alineado, cambia el estado
+        }
+        // Variables para el dashboard
+        SmartDashboard.putBoolean("Alineando", AlineandoToggle);
+        SmartDashboard.putNumber("Dx", Val_Dx);
+        SmartDashboard.putNumber("P", Val_P);
+        SmartDashboard.putNumber("Tx", Tx);
     }
     // ------------------------------------------
 
@@ -299,7 +333,14 @@ public class Robot extends TimedRobot {
     // METODOS PARA LA CAMARA
 
     private double tx() {
-        return txLimelight.getDouble(0.0);
+        // table = NetworkTableInstance.getDefault().getTable("Limelight");
+        // txLimelight = table.getEntry("tx");
+        // tyLimelight = table.getEntry("ty");
+        // taLimelight = table.getEntry("ta");
+        double alpha = 0.9;
+        double val = txLimelight.getDouble(0.0);
+        tx_mem = average_r(val, alpha, tx_mem);
+        return tx_mem;
     }
 
     private double ty() {
@@ -320,34 +361,57 @@ public class Robot extends TimedRobot {
      * para pasarle a los motores. El valor de esta Potencia es PROPORCIONAL al
      * valor de tx. La proporcion es dada por la constante KC.
      * 
-     * Esto es, mientras más separado el objetivo del centro, más fuerte se   enta
-     * girar el robot, hasta llegar a Potencia cero (alineado).
+     * Esto es, mientras más separado el objetivo del centro, más fuerte se  
+     * Potencia cero (alineado).
      */
     private void alinear_con_camara() {
         // Este metodo se ejecuta una vez en cada periodo de TeleOp
 
         // Leer el "error" (valor tx, o "delta x")
         double Dx = tx();
+        Val_Dx = Dx;
+        // Val_Dx++;
         // Potencia deseada segun el error
-        double P = KC * Dx; // KC debe ser creada y definida con un valor adecuado
+        double P = Kp * Dx; // KC debe ser creada y definida con un valor adecuado
+        Val_P = P;
 
         /*
          * Hay que convertir esta potencia de giro en las potencias (velocidades) que se
          * le piden a los motores En este caso, debera ser la misma para ambos, pero con
          * signo diferente.
          */
-        girar_robot(P); // (NO EXISTE) ESTO DEBE PROBARSE
+        girar_robot(P);
+
+        // en algun momento quiero anunciar que ya nos alineamos.
+
+        // if (Math.abs(Dx) <= 1.0) { AlineandoToggle = false; }
 
     }
 
     // ESTADOS CON LA CAMARA
     private void camara_alineando_boton() {
-        if (CorreaToggle == false) { // Entrar al estado
-            CorreaToggle = true; // Activar estado
-            alinear_con_camara();
+        if (AlineandoToggle == false) { // Entrar al estado
+            AlineandoToggle = true; // Activar estado
+
+            /* Esta Accion no puede estar dentro del metodo para Activar el estado */
+            // alinear_con_camara();
         } else { // Salir del estado
-            detener_robot(); // NO EXISTE TODAVIA (PUEDE SER OTRA)
-            CorreaToggle = false;
+            detener_robot();
+            AlineandoToggle = false;
         }
+    }
+
+    private void girar_robot(double v) {
+        // izquierda: motor derecho P positivo y motor izquierdo P negativo
+        // derecha: motor derecho P negativo y motor izquirdo P positivo
+        acelerar_robot(v, v);
+    }
+
+    private void detener_robot() {
+        acelerar_robot(0, 0);
+    }
+
+    private double average_r(double val, double alpha, double mem) {
+        return alpha * val + (1 - alpha) * mem;
     }
 }
