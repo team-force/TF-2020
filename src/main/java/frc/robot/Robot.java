@@ -86,9 +86,16 @@ public class Robot extends TimedRobot {
     // ------------- FIN DE SOLENOIDES ----------- //
 
     // ----------------- VARIABLES ---------------//
-    private boolean recogedorToogle = false;
+
+    // Banderas para cambiar entre estados
+    // TODO: ponerlas en el mismo orden en que aparecen los estados en
+    // TeleopPeriodic
+
+    private boolean recogedorToggle = false;
     private boolean CorreaToggle = false;
     private boolean shooterToggle = false;
+    private boolean detenidoToogle = true;
+    private boolean soltandoToogle = false;
 
     private DifferentialDrive m_robotDrive;
     private Joystick m_stick;
@@ -142,11 +149,6 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
 
-        // table = NetworkTableInstance.getDefault().getTable("limelight");
-        // txLimelight = table.getEntry("tx");
-        // tyLimelight = table.getEntry("ty");
-        // taLimelight = table.getEntry("ta");
-
         double Tx = txLimelight.getDouble(78.0);
         /*
          * // recogedor toggle ver. if (ControlDriver.getYButtonPressed()) {
@@ -167,28 +169,31 @@ public class Robot extends TimedRobot {
         }
 
         // ----------- REVISAR ESTADOS -----------
-        if (AlineandoToggle == true) {
-            alinear_con_camara(); // Como es una accion: hace algo breve y sale. Si ya alineado, cambia el estado
+
+        if (detenidoToogle == true) {
+            robot_detenido(); // hay que declararlo
+        } else if (shooterToggle == true) {
+            shooter_encendido(); // declarar
+        } else if (recogedorToggle == true) {
+            recogedor_entrando();
+        } else if (soltandoToogle == true) {
+            recogedor_saliendo();
+        } else {
+            robot_alineandose(); // declarar
         }
-        // Variables para el dashboard
+
+        // Enviar variables al Dashboard
         SmartDashboard.putBoolean("Alineando", AlineandoToggle);
         SmartDashboard.putNumber("Dx", Val_Dx);
         SmartDashboard.putNumber("P", Val_P);
         SmartDashboard.putNumber("Tx", Tx);
+
     }
     // ------------------------------------------
 
-    /* ------ METODOS PARA EL RECOGEDOR --- */
-
-    private void acelerar_recogedor(double vel) {
-        // recogedorTalon1.set(ControlMode.PercentOutput, vel);
-        // recogedorTalon2.set(ControlMode.PercentOutput, vel);
-
-    }
-
-    private void detener_recogedor() {
-        acelerar_recogedor(0.0);
-    }
+    /* ------ ESTADOS DEL ROBOT ------------- */
+    // TODO: ponerlas en el mismo orden en que aparecen los estados en
+    // TeleopPeriodic
 
     private void recogedor_entrando() {
         acelerar_recogedor(VEL_RECOGEDOR);
@@ -198,28 +203,6 @@ public class Robot extends TimedRobot {
         acelerar_recogedor(-1 * VEL_RECOGEDOR);
     }
 
-    private void recogedor_entrando_boton() {
-        if (recogedorToogle == false) { // ya esta apagado
-            recogedorToogle = true; // corriendo
-            recogedor_entrando();
-        } else {
-            detener_recogedor();
-            recogedorToogle = false;
-        }
-    }
-
-    private void recogedor_saliendo_boton() {
-        if (recogedorToogle == false) { // ya esta apagado
-            recogedorToogle = true; // corriendo
-            recogedor_saliendo();
-        } else {
-            detener_recogedor();
-            recogedorToogle = false;
-        }
-    }
-
-    /* ------ METODOS PARA LA CORREA --- */
-
     private void correa_subiendo() {
         acelerar_Correa(VEL_CORREA);
     }
@@ -228,14 +211,37 @@ public class Robot extends TimedRobot {
         acelerar_Correa(-1.0 * VEL_CORREA);
     }
 
-    private void detener_correa() {
-        acelerar_Correa(0.0);
+    private void robot_alineandose() {
+        alinear_con_camara();
     }
 
-    private void acelerar_Correa(double vel) {
-        correaTalon1.set(ControlMode.PercentOutput, vel);
-        correaTalon2.set(ControlMode.PercentOutput, vel);
+    private void shooter_encendido() {
+    }
 
+    private void robot_detenido() {
+        detener_robot();
+    }
+
+    /* ------- METODOS PARA BOTONES ---------- */
+
+    private void recogedor_entrando_boton() {
+        if (recogedorToggle == false) { // ya esta apagado
+            recogedorToggle = true; // corriendo
+            recogedor_entrando();
+        } else {
+            detener_recogedor();
+            recogedorToggle = false;
+        }
+    }
+
+    private void recogedor_saliendo_boton() {
+        if (recogedorToggle == false) { // ya esta apagado
+            recogedorToggle = true; // corriendo
+            recogedor_saliendo();
+        } else {
+            detener_recogedor();
+            recogedorToggle = false;
+        }
     }
 
     private void correa_bajando_boton() {
@@ -262,16 +268,6 @@ public class Robot extends TimedRobot {
 
         }
 
-    }
-
-    /* ------ METODOS PARA EL SHOOTER --- */
-    private void detener_shooter() {
-        acelerar_shooter(0.0);
-    }
-
-    private void acelerar_shooter(double vel) {
-        leftShooterTalon.set(ControlMode.PercentOutput, -vel);
-        rightShooterTalon.set(ControlMode.PercentOutput, -vel);
     }
 
     private void shooter_encendido_boton() {
@@ -304,7 +300,53 @@ public class Robot extends TimedRobot {
         // }
     }
 
-    /* METODO PARA EMPUJAR PELOTA */
+    private void camara_alineando_boton() {
+        if (AlineandoToggle == false) { // Entrar al estado
+            AlineandoToggle = true; // Activar estado
+
+            /* Esta Accion no puede estar dentro del metodo para Activar el estado */
+            // alinear_con_camara();
+        } else { // Salir del estado
+            detener_robot();
+            AlineandoToggle = false;
+        }
+    }
+
+    /* ------ METODOS PARA EL RECOGEDOR --- */
+
+    private void acelerar_recogedor(double vel) {
+        // recogedorTalon1.set(ControlMode.PercentOutput, vel);
+        // recogedorTalon2.set(ControlMode.PercentOutput, vel);
+
+    }
+
+    private void detener_recogedor() {
+        acelerar_recogedor(0.0);
+    }
+
+    /* ------ METODOS PARA LA CORREA --- */
+
+    private void detener_correa() {
+        acelerar_Correa(0.0);
+    }
+
+    private void acelerar_Correa(double vel) {
+        correaTalon1.set(ControlMode.PercentOutput, vel);
+        correaTalon2.set(ControlMode.PercentOutput, vel);
+
+    }
+
+    /* ------ METODOS PARA EL SHOOTER --- */
+
+    private void detener_shooter() {
+        acelerar_shooter(0.0);
+    }
+
+    private void acelerar_shooter(double vel) {
+        leftShooterTalon.set(ControlMode.PercentOutput, -vel);
+        rightShooterTalon.set(ControlMode.PercentOutput, -vel);
+    }
+
     public void empujar_pelota() {
         empujarPeSolenoid.set(true);
         try {
@@ -316,6 +358,7 @@ public class Robot extends TimedRobot {
         empujarPeSolenoid.set(false);
     }
 
+    /* ------- METODOS PARA MOVER EL ROBOT ----- */
     private void avanzar_por_velocidad(double vel) {
         acelerar_robot(-1.0 * vel, vel);
     }
@@ -325,33 +368,22 @@ public class Robot extends TimedRobot {
         rightTalon.set(ControlMode.PercentOutput, vel_right);
     }
 
-    // METODOS PARA LA NEUMATICA
+    private void girar_robot(double v) {
+        // izquierda: motor derecho P positivo y motor izquierdo P negativo
+        // derecha: motor derecho P negativo y motor izquirdo P positivo
+        acelerar_robot(v, v);
+    }
+
+    private void detener_robot() {
+        acelerar_robot(0, 0);
+    }
+
+    /* ------ METODOS NEUMATICA ------- */
     public void initNeumatics() {
         mainCompressor.setClosedLoopControl(true);
     }
 
-    // METODOS PARA LA CAMARA
-
-    private double tx() {
-        // table = NetworkTableInstance.getDefault().getTable("Limelight");
-        // txLimelight = table.getEntry("tx");
-        // tyLimelight = table.getEntry("ty");
-        // taLimelight = table.getEntry("ta");
-        double alpha = 0.9;
-        double val = txLimelight.getDouble(0.0);
-        tx_mem = average_r(val, alpha, tx_mem);
-        return tx_mem;
-    }
-
-    private double ty() {
-        return tyLimelight.getDouble(0.0);
-    }
-
-    private double ta() {
-        return taLimelight.getDouble(0.0);
-    }
-
-    // ACCIONES CON LA CAMARA
+    /* ------ METODOS CAMARA ------- */
 
     /*
      * Alinea el robot con un objetivo haciendo que el centro del objetivo se
@@ -388,27 +420,23 @@ public class Robot extends TimedRobot {
 
     }
 
-    // ESTADOS CON LA CAMARA
-    private void camara_alineando_boton() {
-        if (AlineandoToggle == false) { // Entrar al estado
-            AlineandoToggle = true; // Activar estado
-
-            /* Esta Accion no puede estar dentro del metodo para Activar el estado */
-            // alinear_con_camara();
-        } else { // Salir del estado
-            detener_robot();
-            AlineandoToggle = false;
-        }
+    private double tx() {
+        // table = NetworkTableInstance.getDefault().getTable("Limelight");
+        // txLimelight = table.getEntry("tx");
+        // tyLimelight = table.getEntry("ty");
+        // taLimelight = table.getEntry("ta");
+        double alpha = 0.9;
+        double val = txLimelight.getDouble(0.0);
+        tx_mem = average_r(val, alpha, tx_mem);
+        return tx_mem;
     }
 
-    private void girar_robot(double v) {
-        // izquierda: motor derecho P positivo y motor izquierdo P negativo
-        // derecha: motor derecho P negativo y motor izquirdo P positivo
-        acelerar_robot(v, v);
+    private double ty() {
+        return tyLimelight.getDouble(0.0);
     }
 
-    private void detener_robot() {
-        acelerar_robot(0, 0);
+    private double ta() {
+        return taLimelight.getDouble(0.0);
     }
 
     private double average_r(double val, double alpha, double mem) {
