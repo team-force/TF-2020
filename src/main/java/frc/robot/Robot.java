@@ -164,23 +164,23 @@ public class Robot extends TimedRobot {
         // Boton para activar alinearse
         // Como hacer que el boton haga que aliner_con_camara se corra cada vez que
         // entramos a TeleopPeriodic
-        if (ControlDriver.getXButtonPressed()) {
+        
             camara_alineando_boton(); // Siguiendo mismo estilo
-        }
+        
 
         // ----------- REVISAR ESTADOS -----------
 
-        if (detenidoToogle == true) {
-            robot_detenido(); // hay que declararlo
-        } else if (shooterToggle == true) {
-            shooter_encendido(); // declarar
-        } else if (recogedorToggle == true) {
-            recogedor_entrando();
-        } else if (soltandoToogle == true) {
-            recogedor_saliendo();
-        } else {
-            robot_alineandose(); // declarar
-        }
+        // if (detenidoToogle == true) {
+        //     robot_detenido(); // hay que declararlo
+        // } else if (shooterToggle == true) {
+        //     shooter_encendido(); // declarar
+        // } else if (recogedorToggle == true) {
+        //     recogedor_entrando();
+        // } else if (soltandoToogle == true) {
+        //     recogedor_saliendo();
+        // } else {
+        //     robot_alineandose(); // declarar
+        // }
 
         // Enviar variables al Dashboard
         SmartDashboard.putBoolean("Alineando", AlineandoToggle);
@@ -301,15 +301,22 @@ public class Robot extends TimedRobot {
     }
 
     private void camara_alineando_boton() {
-        if (AlineandoToggle == false) { // Entrar al estado
-            AlineandoToggle = true; // Activar estado
+        if (ControlDriver.getXButtonPressed()) {
+            if (AlineandoToggle == false) { // Entrar al estado
+                AlineandoToggle = true; // Activar estado
 
-            /* Esta Accion no puede estar dentro del metodo para Activar el estado */
-            // alinear_con_camara();
-        } else { // Salir del estado
-            detener_robot();
-            AlineandoToggle = false;
+                /* Esta Accion no puede estar dentro del metodo para Activar el estado */
+                // alinear_con_camara();
+            } else { // Salir del estado
+                // detener_robot();
+                AlineandoToggle = false;
+            }
         }
+        if (AlineandoToggle == true) { // Entrar al estado
+            /* Esta Accion no puede estar dentro del metodo para Activar el estado */
+            alinear_con_camara();
+        }
+
     }
 
     /* ------ METODOS PARA EL RECOGEDOR --- */
@@ -400,9 +407,9 @@ public class Robot extends TimedRobot {
         // Este metodo se ejecuta una vez en cada periodo de TeleOp
 
         // Leer el "error" (valor tx, o "delta x")
-        double Dx = tx();
+        double Dx = txLimelight.getDouble(0.0);
         Val_Dx = Dx;
-        // Val_Dx++;
+        //Val_Dx++;
         // Potencia deseada segun el error
         double P = Kp * Dx; // KC debe ser creada y definida con un valor adecuado
         Val_P = P;
