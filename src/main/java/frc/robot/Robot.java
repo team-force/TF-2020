@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 // import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
+// import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
@@ -45,9 +45,6 @@ public class Robot extends TimedRobot {
     final double VEL_CORREA = 0.40;
     final double VEL_SHOOTER = 0.60;
     final double VEL_RECOGEDOR = 0.40;
-
-    final double Kp = 0.05;
-    final double Ki = 0.002;
 
     // ---------------- MOTORES ------------ //
     private TalonSRX leftTalon = new TalonSRX(1);
@@ -75,13 +72,13 @@ public class Robot extends TimedRobot {
 
     // ---------------- COMPRESOR --------------- //
 
-    private Compressor mainCompressor = new Compressor(0);
+    // private Compressor mainCompressor = new Compressor(0);
 
     // ------------- FIN DE COMPRESOR ----------- //
 
     // ---------------- SOLENOIDES --------------- //
 
-    private Solenoid empujarPeSolenoid = new Solenoid(0);
+    // private Solenoid empujarPeSolenoid = new Solenoid(0);
 
     // ------------- FIN DE SOLENOIDES ----------- //
 
@@ -96,6 +93,8 @@ public class Robot extends TimedRobot {
     private boolean shooterToggle = false;
     private boolean detenidoToogle = true;
     private boolean soltandoToogle = false;
+    private boolean AlineandoDistanciaToggle = false;
+    private boolean AlineandoToggle = false;
 
     private DifferentialDrive m_robotDrive;
     private Joystick m_stick;
@@ -105,9 +104,19 @@ public class Robot extends TimedRobot {
     // ---- Variables par Limelight ----- //
     private double Val_Dx = 0.0;
     private double Val_P = 0.0;
-    private boolean AlineandoToggle = false;
     private double tx_mem = 0.0;
+    private double ty_mem = 0.0;
     private double align_mem = 0.0;
+    private double ty_distance = 0.0;
+    private double Kp = 0.0;
+    private double Ki = 0.0;
+    private double error_min = 15.0;
+
+    private double currentDistance = 0.0;
+    private double goalDistance = 0.0; // pulgadas
+    private double distanceError = 0.0;
+    private double kp_dist = 0.0;
+    private double rangeAdjustment = 0.0;
 
     // ------- Variables para el Shooter ----
     private double angulo_shooter = 40; // en Grados para entender
@@ -126,7 +135,13 @@ public class Robot extends TimedRobot {
 
         table = NetworkTableInstance.getDefault().getTable("limelight");
         txLimelight = table.getEntry("tx");
-        // tyLimelight = table.getEntry("ty");
+        tyLimelight = table.getEntry("ty");
+
+        AlineandoToggle = false;
+        AlineandoDistanciaToggle = false;
+        Kp = 0.05;
+        Ki = 0.002;
+
         // taLimelight = table.getEntry("ta");
     }
 
@@ -146,48 +161,54 @@ public class Robot extends TimedRobot {
     }
 
     @Override
+    public void teleopInit() {
+        // super.teleopInit();
+        reiniciar_estados();
+
+    }
+
+    @Override
     public void teleopPeriodic() {
-        acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
+        // acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1,
+        // ControlDriver.getY(Hand.kRight));
 
         double Tx = txLimelight.getDouble(78.0);
-        /*
-         * // recogedor toggle ver. if (ControlDriver.getYButtonPressed()) {
-         * correa_bajando_boton(); // Regurgitar }
-         * 
-         * if (ControlDriver.getAButtonPressed()) { correa_subiendo_boton(); // Recoger
-         * }
-         * 
-         * // SHOOTER BUTTON if (ControlDriver.getXButtonPressed()) {
-         * shooter_encendido_boton(); }
-         */
 
         // Boton para activar alinearse
         // Como hacer que el boton haga que aliner_con_camara se corra cada vez que
         // entramos a TeleopPeriodic
-        
-            camara_alineando_boton(); // Siguiendo mismo estilo
-        
+
+        camara_alineando_boton_X(); // Siguiendo mismo estilo
+        camara_distancia_boton_A();
 
         // ----------- REVISAR ESTADOS -----------
 
-        // if (detenidoToogle == true) {
-        //     robot_detenido(); // hay que declararlo
-        // } else if (shooterToggle == true) {
-        //     shooter_encendido(); // declarar
-        // } else if (recogedorToggle == true) {
-        //     recogedor_entrando();
-        // } else if (soltandoToogle == true) {
-        //     recogedor_saliendo();
-        // } else {
-        //     robot_alineandose(); // declarar
-        // }
+        if (detenidoToogle == true) {
+            robot_detenido(); // hay que declararlo
+        } else if (shooterToggle == true) {
+            shooter_encendido(); // declarar
+        } else if (recogedorToggle == true) {
+            recogedor_entrando();
+        } else if (soltandoToogle == true) {
+            recogedor_saliendo();
+        } else if (AlineandoToggle == true) {
+            robot_alineandose(); // declarar
+        } else if (AlineandoDistanciaToggle == true) {
+            robot_distancia();
+        } else {
+            acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
+        }
 
-        // Enviar variables al Dashboard
+        // // Enviar variables al Dashboard
         SmartDashboard.putBoolean("Alineando", AlineandoToggle);
         SmartDashboard.putNumber("Dx", Val_Dx);
         SmartDashboard.putNumber("P", Val_P);
         SmartDashboard.putNumber("Tx", Tx);
-
+        SmartDashboard.putNumber("power", rangeAdjustment);
+        SmartDashboard.putNumber("distance Error", distanceError);
+        SmartDashboard.putNumber("current distance", currentDistance);
+        SmartDashboard.putNumber("ty", ty_distance);
+        SmartDashboard.putNumber("division", Math.tan(Math.toRadians(ty_distance)));
     }
     // ------------------------------------------
 
@@ -211,6 +232,10 @@ public class Robot extends TimedRobot {
         acelerar_Correa(-1.0 * VEL_CORREA);
     }
 
+    private void robot_distancia() {
+        distancia_con_camara();
+    }
+
     private void robot_alineandose() {
         alinear_con_camara();
     }
@@ -219,7 +244,78 @@ public class Robot extends TimedRobot {
     }
 
     private void robot_detenido() {
-        detener_robot();
+        acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
+    }
+    /* ----------- METODOS PARA CAMBIAR DE ESTADOS ------------- */
+
+    private void reiniciar_estados() {
+        AlineandoDistanciaToggle = false;
+        AlineandoDistanciaToggle = false;
+        recogedorToggle = false;
+        CorreaToggle = false;
+        shooterToggle = false;
+        detenidoToogle = true;
+        soltandoToogle = false;
+    }
+
+    private void activar_robot_detenido() {
+        detenidoToogle = true;
+
+        shooterToggle = false;
+        recogedorToggle = false;
+        AlineandoToggle = false;
+        AlineandoDistanciaToggle = false;
+        CorreaToggle = false;
+    }
+
+    private void activar_shooter_encendido() {
+        shooterToggle = true;
+
+        recogedorToggle = false;
+        AlineandoToggle = false;
+        AlineandoDistanciaToggle = false;
+        CorreaToggle = false;
+        detenidoToogle = false;
+    }
+
+    private void activar_recogedor_entrando() {
+        recogedorToggle = true;
+
+        AlineandoToggle = false;
+        AlineandoDistanciaToggle = false;
+        CorreaToggle = false;
+        shooterToggle = false;
+        detenidoToogle = false;
+    }
+
+    private void activar_recogedor_saliendo() {
+        recogedorToggle = true;
+
+        AlineandoToggle = false;
+        AlineandoDistanciaToggle = false;
+        CorreaToggle = false;
+        shooterToggle = false;
+        detenidoToogle = false;
+    }
+
+    private void activar_robot_alineandose() {
+        AlineandoToggle = true;
+
+        AlineandoDistanciaToggle = false;
+        CorreaToggle = false;
+        recogedorToggle = false;
+        shooterToggle = false;
+        detenidoToogle = false;
+    }
+
+    private void activar_robot_distancia() {
+        AlineandoDistanciaToggle = true;
+
+        AlineandoToggle = false;
+        CorreaToggle = false;
+        recogedorToggle = false;
+        shooterToggle = false;
+        detenidoToogle = false;
     }
 
     /* ------- METODOS PARA BOTONES ---------- */
@@ -300,21 +396,32 @@ public class Robot extends TimedRobot {
         // }
     }
 
-    private void camara_alineando_boton() {
+    private void camara_distancia_boton_A() {
+        if (ControlDriver.getAButtonPressed()) {
+            if (AlineandoDistanciaToggle == false) { // Entrar al estado
+                // Activar estado
+                activar_robot_distancia();
+                /* Esta Accion no puede estar dentro del metodo para Activar el estado */
+                // alinear_con_camara();
+
+            } else { // Salir del estado
+                // detener_robot();
+                AlineandoDistanciaToggle = false;
+            }
+        }
+
+    }
+
+    private void camara_alineando_boton_X() {
         if (ControlDriver.getXButtonPressed()) {
             if (AlineandoToggle == false) { // Entrar al estado
-                AlineandoToggle = true; // Activar estado
-
+                activar_robot_alineandose();
                 /* Esta Accion no puede estar dentro del metodo para Activar el estado */
                 // alinear_con_camara();
             } else { // Salir del estado
                 // detener_robot();
                 AlineandoToggle = false;
             }
-        }
-        if (AlineandoToggle == true) { // Entrar al estado
-            /* Esta Accion no puede estar dentro del metodo para Activar el estado */
-            alinear_con_camara();
         }
 
     }
@@ -355,14 +462,14 @@ public class Robot extends TimedRobot {
     }
 
     public void empujar_pelota() {
-        empujarPeSolenoid.set(true);
-        try {
-            TimeUnit.MILLISECONDS.sleep(50);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        empujarPeSolenoid.set(false);
+        // empujarPeSolenoid.set(true);
+        // try {
+        // TimeUnit.MILLISECONDS.sleep(50);
+        // } catch (InterruptedException e) {
+        // // TODO Auto-generated catch block
+        // e.printStackTrace();
+        // }
+        // empujarPeSolenoid.set(false);
     }
 
     /* ------- METODOS PARA MOVER EL ROBOT ----- */
@@ -387,7 +494,7 @@ public class Robot extends TimedRobot {
 
     /* ------ METODOS NEUMATICA ------- */
     public void initNeumatics() {
-        mainCompressor.setClosedLoopControl(true);
+        // mainCompressor.setClosedLoopControl(true);
     }
 
     /* ------ METODOS CAMARA ------- */
@@ -403,13 +510,29 @@ public class Robot extends TimedRobot {
      * Esto es, mientras más separado el objetivo del centro, más fuerte se  
      * Potencia cero (alineado).
      */
+    private void distancia_con_camara() {
+        ty_distance = ty();
+        currentDistance = 57 / Math.tan(Math.toRadians(ty_distance));
+        goalDistance = 130; // pulgadas
+        distanceError = goalDistance - currentDistance;
+        kp_dist = 0.0035;
+        rangeAdjustment = kp_dist * distanceError;
+        rangeAdjustment = Math.min(0.5, rangeAdjustment);
+
+        if (Math.abs(rangeAdjustment) >= 0.0) {
+            avanzar_por_velocidad(rangeAdjustment);
+        } else {
+            detener_robot();
+        }
+    }
+
     private void alinear_con_camara() {
         // Este metodo se ejecuta una vez en cada periodo de TeleOp
 
         // Leer el "error" (valor tx, o "delta x")
         double Dx = txLimelight.getDouble(0.0);
         Val_Dx = Dx;
-        //Val_Dx++;
+        // Val_Dx++;
         // Potencia deseada segun el error
         double P = Kp * Dx; // KC debe ser creada y definida con un valor adecuado
         Val_P = P;
@@ -439,7 +562,12 @@ public class Robot extends TimedRobot {
     }
 
     private double ty() {
-        return tyLimelight.getDouble(0.0);
+        double alpha = 0.6;
+        double val = tyLimelight.getDouble(0.0);
+        if (val > 0) {
+            ty_mem = average_r(val, alpha, ty_mem);
+        }
+        return ty_mem;
     }
 
     private double ta() {
@@ -449,4 +577,5 @@ public class Robot extends TimedRobot {
     private double average_r(double val, double alpha, double mem) {
         return alpha * val + (1 - alpha) * mem;
     }
+
 }
