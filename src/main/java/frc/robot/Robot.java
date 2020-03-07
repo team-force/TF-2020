@@ -222,31 +222,50 @@ public class Robot extends TimedRobot {
         subiendo = false;
     }
 
+    /* 
+    TeleopPeriodic 
+    Ejecuta nuestro programa:
+     Primero: Leer sensores, botones, etc.
+     Segundo: Ejecutar estados o tareas
+     Tercero: Leer el joystick
+    */
     @Override
     public void teleopPeriodic() {
-        // double Tx = txLimelight.getDouble(78.0);
 
-        // Boton para activar alinearse
-        // Como hacer que el boton haga que aliner_con_camara se corra cada vez que
-        // entramos a TeleopPeriodic
-
+        // ------------- LEER SENSORES -------- //
         pelotaLista = !SensorArriba.get();        
         cargado = pelotaLista && !SensorMedio.get();
         disponible = !SensorAbajo.get(); //Pelota disponible para subir
 
-        camara_alineando_boton_2X(); // Siguiendo mismo estilo
+        // ------------ LEER BOTONES ------------//
+        // Del Control Princpipal (driver)
         invertir_motores_boton_Y();
         disparar_dosificador_boton_B();
         descarga_boton_BACK();
         ascensor_boton_START();
+        solenoid_boton_A();
+        
+        // Del Control Secundario (Asistente)
         subiendo_boton_2Y();
+        camara_alineando_boton_2X(); // Siguiendo mismo estilo
         bajando_boton_2A();
         // shooter_encendido_boton_X();
-        solenoid_boton_A();
         dosificador_separando_boton_2B();
 
-        // ----------- REVISAR ESTADOS -----------
-        // Esto es solo para Estados que son incompatibles entre si
+        // ----------- REVISAR TAREAS Y ESTADOS -----------
+        
+        // Las tareas generalmente serian exclusivas (solo una a la vez)
+
+        /* Maquina para ejecutar tareas */
+
+        // Hay estados que son exclusivos, otros que no.
+        // Para los exclusivos: if .... else if 
+        // Para los demas: if .... if ..
+
+        /* Maquina para ejecutar estados exclusivos */
+
+
+        /* Maquina para ejecuta estados no exclusivos */
         if (detenidoActivo) {
             robot_detenido(); // hay que declararlo
         }
@@ -286,15 +305,6 @@ public class Robot extends TimedRobot {
 
 
         mover_con_joysticks();        
-        //TODO: esto deberia ser en robotPeriodic()
-        // // Enviar variables al Dashboard
-        // SmartDashboard.putBoolean("Alineando", alineandoActivo);
-        // SmartDashboard.putNumber("P", Val_P);
-        // SmartDashboard.putNumber("power", rangeAdjustment);
-        // SmartDashboard.putNumber("distance Error", distanceError);
-        // SmartDashboard.putNumber("current distance", currentDistance);
-        // SmartDashboard.putNumber("ty", ty_distance);
-        // SmartDashboard.putNumber("division", Math.tan(Math.toRadians(ty_distance)));
     }
     // ------------------------------------------
 
@@ -418,6 +428,7 @@ public class Robot extends TimedRobot {
         ascensorActivo = false;
         descargaActivo = false;
     }
+    
     private void activar_bajando(){
         bajandoActivo = true;
 
@@ -450,7 +461,7 @@ public class Robot extends TimedRobot {
     }
 
     private void activar_disparar_dosificador() {
-    // alineandoDistanciaActivo = false;
+        // alineandoDistanciaActivo = false;
         dispararDosificadorActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
@@ -498,67 +509,70 @@ public class Robot extends TimedRobot {
         descargaActivo = false;
     }
 
-private void activar_invertir(){
+    private void activar_invertir(){
         invertirActivo = true;
         shooterActivo = false;
         alineandoActivo = false;
 
         alineandoDistanciaActivo = false;
-}    
+    }    
 
+
+    /* -------- ESTADOS -------- */
     private void ascensor(){
-    //SUBIENDO: Si llega una pelota, subirla hasta el proximo nivel (S2)
-    //CARGADO: Si llega una al tercer nivel, y el segundo no esta vacio, detengo el recogedor
-    
-    // CARGADO: Hay una el el tercero, y una en el segundo (ya no subir mas pelotas) (puedo recoger, pero no subo)
-    // SUBIENDO: Llega una a S1 y no hay en S2
-    if (!cargado){
-        if(disponible ){
-            subiendo = true;
-            if (!SensorMedio.get()){
-                pelotaS2 = true;
-            } else {
-                pelotaS2 = false;
+        //SUBIENDO: Si llega una pelota, subirla hasta el proximo nivel (S2)
+        //CARGADO: Si llega una al tercer nivel, y el segundo no esta vacio, detengo el recogedor
+        
+        // CARGADO: Hay una el el tercero, y una en el segundo (ya no subir mas pelotas) (puedo recoger, pero no subo)
+        // SUBIENDO: Llega una a S1 y no hay en S2
+        if (!cargado){
+            if(disponible ){
+                subiendo = true;
+                if (!SensorMedio.get()){
+                    pelotaS2 = true;
+                } else {
+                    pelotaS2 = false;
+                }
             }
         }
-    }
 
-    if (cargado && disponible)
-        subiendo = false;
+        if (cargado && disponible)
+            subiendo = false;
 
-    if(!SensorArriba.get())
-    {
-        detener_dosificador();                
-    }
-
-    if (subiendo) {
-        // mover correa
-        correa_subiendo();
-        acelerar_dosificador(0.30*VEL_Dosificador);
-           
-        
-
-        // Revisar si llego la que estaba subiendo
-        if (pelotaS2) // habia una y todavia esta
+        if(!SensorArriba.get())
         {
-            pelotaS2 = !SensorMedio.get();
-        } else {
-            subiendo = SensorMedio.get();
+            detener_dosificador();                
         }
-    } else {
-        // detener correa
-        detener_correa();
-        if(disponible){
-            detener_recogedor();
-            ascensorActivo = false;
+
+        if (subiendo) {
+            // mover correa
+            correa_subiendo();
+            acelerar_dosificador(0.30*VEL_Dosificador);
+            
+            
+
+            // Revisar si llego la que estaba subiendo
+            if (pelotaS2) // habia una y todavia esta
+            {
+                pelotaS2 = !SensorMedio.get();
+            } else {
+                subiendo = SensorMedio.get();
+            }
         } else {
-            recogedor_entrando();
+            // detener correa
+            detener_correa();
+            if(disponible){
+                detener_recogedor();
+                ascensorActivo = false;
+            } else {
+                recogedor_entrando();
+            }
+            
         }
         
-    }
+        
+    } 
     
-    
-} 
     private void descargador(){
         // SI DISPONIBLE: solo sacar
         // SI NO DISPONIBLE: bajar hasta que haya disponible; solo si ya habia pelotas
@@ -590,16 +604,6 @@ private void activar_invertir(){
         }
         
     }
-
-    // private void activar_robot_distancia() {
-    // alineandoDistanciaActivo = true;
-
-    // alineandoActivo = false;
-    // bajandoActivo = false;
-    // subiendoActivo = false;
-    // shooterActivo = false;
-    // detenidoActivo = false;
-    // }
 
     /* ------- METODOS PARA BOTONES ---------- */
 
@@ -734,8 +738,8 @@ private void activar_invertir(){
                 dispararDosificadorActivo = false;
             }
         }
-      }
-    
+    }
+ 
     private void solenoid_boton_A(){
         if(ControlDriver.getAButtonPressed()){
             if(solenoidActivo == false){
@@ -749,7 +753,8 @@ private void activar_invertir(){
         }
     }
 
-        /* ------ METODOS PARA EL RECOGEDOR --- */
+    /* ------ METODOS PARA EL RECOGEDOR --- */
+
 
     private void acelerar_recogedor(double vel) {
         // recogedorMotor1.set(ControlMode.PercentOutput, vel);
@@ -831,14 +836,15 @@ private void activar_invertir(){
                     dispararDosificadorActivo = false; //resetear solo
                 }
             }  
-        }
-    
+    }
+
     /* ------- METODOS PARA MOVER EL ROBOT ----- */
     private void mover_con_joysticks(){
         if (drivetrainBloqueado){
             acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
         }
     }
+    
     private void avanzar_por_velocidad(double vel) {
         acelerar_robot(vel, vel);
     }
@@ -876,6 +882,7 @@ private void activar_invertir(){
         pressureSwitch = mainCompressor.getPressureSwitchValue();
         current = mainCompressor.getCompressorCurrent();
     }
+    
     public void Solenoid(boolean val){
         if(val){
             shooterSolenoid.set(Value.kForward);
@@ -883,7 +890,7 @@ private void activar_invertir(){
         else {
             shooterSolenoid.set(Value.kReverse);
         }
-}
+    }
         
     /* ------ METODOS CAMARA ------- */
 
@@ -943,7 +950,7 @@ private void activar_invertir(){
 
         if (Math.abs(combinacionVelocidadPos) >= 0.0 || Math.abs(combinacionVelocidadNeg) >= 0.0) {
             acelerar_robot(combinacionVelocidadPos, combinacionVelocidadNeg);
-        } else if(Math.abs(combinacionVelocidadPos) == 0.0 && Math.abs(combinacionVelocidadNeg) == 0.0 && shooterActivo)){
+        } else if(Math.abs(combinacionVelocidadPos) == 0.0 && Math.abs(combinacionVelocidadNeg) == 0.0 && shooterActivo){
             dispararDosificadorActivo = true;
         } else {
             alineandoActivo = false;
