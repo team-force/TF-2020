@@ -12,9 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -46,28 +44,49 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  */
 
 public class Robot extends TimedRobot {
+
+    // ID de Talons en Robot Nuevo
+    final int DRIVE_LF = 13;
+    final int DRIVE_LB = 14;
+    final int DRIVE_RF = 3;
+    final int DRIVE_RB = 4;
+
+    final int CORREA_F = 1;
+    final int CORREA_B = 2;
+    final int RECOGEDOR_F = 10;
+    final int RECOGEDOR_B = 11;
+
+    final int SHOOTER_L = 15;
+    final int SHOOTER_R = 6;
+    final int DOSIFICADOR = 5 ;
+
+    final int LIFTER_L = 16;
+    final int LIFTER_R = 7;
+
+    final int RULETA = 12;
+    
     // Constantes
     final double VEL_CORREA = 0.3;
     final double VEL_SHOOTER = 0.80;
     final double VEL_RECOGEDOR = 0.25;
     final double VEL_Dosificador= 0.6;
 
-    // ---------------- MOTORES victro ------------ //
-    private WPI_VictorSPX leftFrontDrive = new WPI_VictorSPX(3);
-    private WPI_VictorSPX leftBackDrive = new WPI_VictorSPX(4);
-    private WPI_VictorSPX frontRecogedorMotor = new WPI_VictorSPX(0);
-    private WPI_VictorSPX rearRecogedorMotor = new WPI_VictorSPX(1);
-    private WPI_VictorSPX dosificadorMotor = new WPI_VictorSPX(2);
-    private WPI_VictorSPX leftShooterMotor = new WPI_VictorSPX(5);
-    // ---------------- FIN MOTORES victro ------------ //
+    // ---------------- MOTORES  ------------ //
+    private WPI_TalonSRX leftFrontDrive = new WPI_TalonSRX(DRIVE_LF);
+    private WPI_TalonSRX leftBackDrive = new WPI_TalonSRX(DRIVE_LB);
+    private WPI_TalonSRX frontRecogedorMotor = new WPI_TalonSRX(RECOGEDOR_F);
+    private WPI_TalonSRX rearRecogedorMotor = new WPI_TalonSRX(RECOGEDOR_B);
+    private WPI_TalonSRX dosificadorMotor = new WPI_TalonSRX(DOSIFICADOR);
+    private WPI_TalonSRX leftShooterMotor = new WPI_TalonSRX(SHOOTER_L);
     
-    // ---------------- MOTORES talon ------------ //
-    private WPI_TalonSRX rightFrontDrive = new WPI_TalonSRX(1);
-    private WPI_TalonSRX rightBackDrive = new WPI_TalonSRX(2);
-    private WPI_TalonSRX correaMotor1 = new WPI_TalonSRX(4);
-    private WPI_TalonSRX correaMotor2 = new WPI_TalonSRX(3);
-    private WPI_TalonSRX rightShooterMotor = new WPI_TalonSRX(6);
-    // ---------------- FIN MOTORES talon ------------ //
+    
+    
+    private WPI_TalonSRX rightFrontDrive = new WPI_TalonSRX(DRIVE_RF);
+    private WPI_TalonSRX rightBackDrive = new WPI_TalonSRX(DRIVE_RB);
+    private WPI_TalonSRX correaFrontMotor = new WPI_TalonSRX(CORREA_F);
+    private WPI_TalonSRX correaBackMotor = new WPI_TalonSRX(CORREA_B);
+    private WPI_TalonSRX rightShooterMotor = new WPI_TalonSRX(SHOOTER_R);
+    // ---------------- FIN MOTORES  ------------ //
     
 
     // ---------------- Limelight ------------ //
@@ -240,14 +259,11 @@ public class Robot extends TimedRobot {
         // ------------ LEER BOTONES ------------//
         // Del Control Princpipal (driver)
         invertir_motores_boton_Y();
-        disparar_dosificador_boton_B();
-        descarga_boton_BACK();
-        ascensor_boton_START();
+        shooter_encendido_boton_X();
         solenoid_boton_A();
         
         // Del Control Secundario (Asistente)
         subiendo_boton_2Y();
-        camara_alineando_boton_2X(); // Siguiendo mismo estilo
         bajando_boton_2A();
         // shooter_encendido_boton_X();
         dosificador_separando_boton_2B();
@@ -347,7 +363,7 @@ public class Robot extends TimedRobot {
     }
 
     private void separando(){
-        acelerar_dosificador(-0.3*VEL_Dosificador);
+        acelerar_dosificador(0.3*VEL_Dosificador);
     }
 
     private void shooter_encendido() {
@@ -702,7 +718,6 @@ public class Robot extends TimedRobot {
         if(AssistantDriver.getBButton()){
             if (separadorActivo == false) {
                 activar_separando();
-                separando();
                 
             } else if (separadorActivo == true) {
                 detener_dosificador();
@@ -774,8 +789,8 @@ public class Robot extends TimedRobot {
     }
 
     private void acelerar_Correa(double vel) {
-        correaMotor1.set(ControlMode.PercentOutput, vel);
-        correaMotor2.set(ControlMode.PercentOutput, vel);
+        correaFrontMotor.set(ControlMode.PercentOutput, vel);
+        correaBackMotor.set(ControlMode.PercentOutput, vel);
 
     }
 
@@ -986,6 +1001,7 @@ public class Robot extends TimedRobot {
     private double average_r(double val, double alpha, double mem) {
         return alpha * val + (1 - alpha) * mem;
     }
+
 
     
 }
