@@ -20,15 +20,15 @@ Los estados son combinaciones de acciones y otros estados que se ejecutan segun 
 ## De las pelotas
 
 ### recogedor
-- recogedor entrando
-- recogedor saliendo
+- recogedor entrando (entrar pelota)
+- recogedor saliendo (sacar pelota)
 - acelerar recogedor
 - detener recogedor
 
 
 ### correa
-- correa subiendo
-- correa bajando
+- correa subiendo (subir pelotas)
+- correa bajando (bajar pelotas)
 - detener correa
 - acelerar correa
 
