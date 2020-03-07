@@ -118,7 +118,7 @@ public class Robot extends TimedRobot {
     private boolean ascensorActivo = false;
     private boolean descargaActivo = false;
 
-    private boolean drivetrainBloqueado = false;
+    private boolean drivetrainBloqueado = true;
 
     // private DifferentialDrive m_robotDrive;
     // private Joystick m_stick;
@@ -236,24 +236,54 @@ public class Robot extends TimedRobot {
 
         camara_alineando_boton_2X(); // Siguiendo mismo estilo
         invertir_motores_boton_Y();
-        disparar_dosificador_boton_2B();
+        disparar_dosificador_boton_B();
         descarga_boton_BACK();
         ascensor_boton_START();
-        //juntos
-        correa_subiendo_boton_2Y();
-        recogedor_entrando_boton_2Y();
-        //juntos
-        correa_bajando_boton_2A();
-        recogedor_saliendo_boton_2A();
-        shooter_encendido_boton_X();
+        subiendo_boton_2Y();
+        bajando_boton_2A();
+        // shooter_encendido_boton_X();
         solenoid_boton_A();
-        dosificador_separando_boton_B();
+        dosificador_separando_boton_2B();
 
         // ----------- REVISAR ESTADOS -----------
         // Esto es solo para Estados que son incompatibles entre si
         if (detenidoActivo) {
             robot_detenido(); // hay que declararlo
         }
+        if(alineandoActivo){
+            robot_alineandose();
+        } else {
+            robot_detenido();
+            reiniciar_estados();
+        }
+        if(shooterActivo){
+            shooter_encendido();
+        } else {
+            robot_detenido();
+            reiniciar_estados();
+        }
+        if(dispararDosificadorActivo){
+            dosifcador_disparando();
+        }
+        if(descargaActivo){
+            robot_descargando();
+        }
+        if(ascensorActivo){
+            robot_recargando();
+        }
+        if(subiendoActivo){
+            correa_subiendo();
+            recogedor_entrando();
+        }
+        if(bajandoActivo){
+            correa_bajando();
+            recogedor_saliendo();
+        }
+        if(separadorActivo){
+            separando();
+        }
+        
+
 
         mover_con_joysticks();        
         //TODO: esto deberia ser en robotPeriodic()
@@ -312,8 +342,6 @@ public class Robot extends TimedRobot {
 
     private void shooter_encendido() {
         alinear_con_camara();
-        
-        disparar_dosificador();
     }
 
     private void robot_detenido() {
@@ -555,7 +583,7 @@ private void activar_invertir(){
             } else if (contador_descargar > 0){
                 contador_descargar--;
             } else {
-
+                
                 detener_recogedor();
                 descargaActivo = false;
             }
@@ -574,33 +602,6 @@ private void activar_invertir(){
     // }
 
     /* ------- METODOS PARA BOTONES ---------- */
-
-    private void recogedor_entrando_boton_2Y() {
-        if (AssistantDriver.getYButtonPressed()) {
-            if (subiendoActivo == false) { // ya esta apagado
-                subiendoActivo = true; // corriendo
-                activar_subiendo();
-                recogedor_entrando();
-            } else {
-                detener_recogedor();
-                subiendoActivo = false;
-            }
-        }    
-    }
-
-    private void recogedor_saliendo_boton_2A() {
-        if (AssistantDriver.getAButtonPressed()) {
-            if (bajandoActivo == false) { // ya esta apagado
-                bajandoActivo = true; // corriendo
-                activar_bajando();
-                recogedor_saliendo();
-                
-            } else {
-                detener_recogedor();
-                bajandoActivo = false;
-            }
-        }
-    }
 
     private void ascensor_boton_START() {
         if (ControlDriver.getStartButtonPressed()){
@@ -623,7 +624,6 @@ private void activar_invertir(){
             ascensorActivo = false;
 
             if (descargaActivo == false) { // ya esta apagado
-                descargaActivo = true; // corriendo
                 activar_descarga();
                 robot_descargando();
                 
@@ -635,30 +635,32 @@ private void activar_invertir(){
         }
     }
 
-    private void correa_bajando_boton_2A() {
+    private void bajando_boton_2A() {
         if (AssistantDriver.getAButtonPressed()) {
             if (bajandoActivo == false) { // ya esta apagado
                 bajandoActivo = true; // corriendo
                 activar_bajando();
                 correa_bajando();
+                recogedor_saliendo();
                 
             } else {
                 detener_correa();
+                detener_recogedor();
                 bajandoActivo = false;
             }
         }
     }
 
-    private void correa_subiendo_boton_2Y() {
+    private void subiendo_boton_2Y() {
         if (AssistantDriver.getYButtonPressed()) {
-            if (subiendoActivo == true) {
-                subiendoActivo = false;
+            if (!subiendoActivo) {
                 activar_subiendo();
                 correa_subiendo();
-                
-            } else if (subiendoActivo == false) {
+                recogedor_entrando();
+            } else {
                 detener_correa();
-                subiendoActivo = true;
+                detener_recogedor();
+                subiendoActivo = false;
             }
         }
     }
@@ -692,8 +694,8 @@ private void activar_invertir(){
 
     }
 
-    private void dosificador_separando_boton_B() {
-        if(ControlDriver.getBButton()){
+    private void dosificador_separando_boton_2B() {
+        if(AssistantDriver.getBButton()){
             if (separadorActivo == false) {
                 activar_separando();
                 separando();
@@ -721,10 +723,9 @@ private void activar_invertir(){
 
     }
 
-    private void disparar_dosificador_boton_2B(){
-        if (AssistantDriver.getBButtonPressed()) {
+    private void disparar_dosificador_boton_B(){
+        if (ControlDriver.getBButtonPressed()) {
             if (dispararDosificadorActivo == false) { // Entrar al estado
-                dispararDosificadorActivo = true;
                 activar_disparar_dosificador();
                 dosifcador_disparando();
                 
@@ -834,7 +835,7 @@ private void activar_invertir(){
     
     /* ------- METODOS PARA MOVER EL ROBOT ----- */
     private void mover_con_joysticks(){
-        if (!drivetrainBloqueado){
+        if (drivetrainBloqueado){
             acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
         }
     }
@@ -942,8 +943,11 @@ private void activar_invertir(){
 
         if (Math.abs(combinacionVelocidadPos) >= 0.0 || Math.abs(combinacionVelocidadNeg) >= 0.0) {
             acelerar_robot(combinacionVelocidadPos, combinacionVelocidadNeg);
+        } else if(Math.abs(combinacionVelocidadPos) == 0.0 && Math.abs(combinacionVelocidadNeg) == 0.0 && shooterActivo)){
+            dispararDosificadorActivo = true;
         } else {
             alineandoActivo = false;
+            shooterActivo = false;
         }
 
     }
