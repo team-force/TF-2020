@@ -145,7 +145,7 @@ public class Robot extends TimedRobot {
     private double combinacionVelocidadPos = 0.0;
     private double combinacionVelocidadNeg = 0.0;
 
-    // Para el ascensor
+    // Para el robot_recargando
     
     private boolean cargado = false;
     private boolean disponible = false;
@@ -165,7 +165,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         
         // m_stick = new Joystick(2);
-        initNeumatics();
+        iniciar_neumatica();
 
         table = NetworkTableInstance.getDefault().getTable("limelight");
         txLimelight = table.getEntry("tx");
@@ -243,32 +243,20 @@ public class Robot extends TimedRobot {
         disparar_dosificador_boton_B();
         descarga_boton_BACK();
         ascensor_boton_START();
-        solenoid_boton_A();
-        
+        cambiar_angulo_shooter_boton_A();
+        shooter_encendido_boton_X();
+
         // Del Control Secundario (Asistente)
         subiendo_boton_2Y();
         camara_alineando_boton_2X(); // Siguiendo mismo estilo
         bajando_boton_2A();
-        // shooter_encendido_boton_X();
-        dosificador_separando_boton_2B();
+        dosificar_boton_2B();
 
         // ----------- REVISAR TAREAS Y ESTADOS -----------
         
         // Las tareas generalmente serian exclusivas (solo una a la vez)
 
         /* Maquina para ejecutar tareas */
-
-        // Hay estados que son exclusivos, otros que no.
-        // Para los exclusivos: if .... else if 
-        // Para los demas: if .... if ..
-
-        /* Maquina para ejecutar estados exclusivos */
-
-
-        /* Maquina para ejecuta estados no exclusivos */
-        if (detenidoActivo) {
-            robot_detenido(); // hay que declararlo
-        }
         if(alineandoActivo){
             robot_alineandose();
         } else {
@@ -281,6 +269,15 @@ public class Robot extends TimedRobot {
             robot_detenido();
             reiniciar_estados();
         }
+        
+        // Hay estados que son exclusivos, otros que no.
+        // Para los exclusivos: if .... else if 
+        // Para los demas: if .... if ..
+
+        /* Maquina para ejecutar estados exclusivos */
+
+
+        /* Maquina para ejecuta estados no exclusivos */
         if(dispararDosificadorActivo){
             dosifcador_disparando();
         }
@@ -301,8 +298,6 @@ public class Robot extends TimedRobot {
         if(separadorActivo){
             separando();
         }
-        
-
 
         mover_con_joysticks();        
     }
@@ -332,18 +327,6 @@ public class Robot extends TimedRobot {
 
     private void robot_alineandose() {
         alinear_con_camara();
-    }
-
-    private void dosifcador_disparando(){
-        disparar_dosificador();
-    }
-
-    private void robot_descargando(){
-        descargador();
-    }
-
-    private void robot_recargando(){
-        ascensor();
     }
 
     private void separando(){
@@ -416,7 +399,7 @@ public class Robot extends TimedRobot {
         detenidoActivo = false;
     }
 
-    private void activar_subiendo(){
+    private void activar_recogiendo_continuo(){
         subiendoActivo = true;
 
         bajandoActivo = false;
@@ -429,7 +412,7 @@ public class Robot extends TimedRobot {
         descargaActivo = false;
     }
     
-    private void activar_bajando(){
+    private void activar_botando_continuo(){
         bajandoActivo = true;
 
         subiendoActivo = false;
@@ -496,7 +479,7 @@ public class Robot extends TimedRobot {
         descargaActivo = false;
     }
 
-    private void activar_separando(){
+    private void activar_dosificar(){
         separadorActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
@@ -519,7 +502,7 @@ public class Robot extends TimedRobot {
 
 
     /* -------- ESTADOS -------- */
-    private void ascensor(){
+    private void robot_recargando(){
         //SUBIENDO: Si llega una pelota, subirla hasta el proximo nivel (S2)
         //CARGADO: Si llega una al tercer nivel, y el segundo no esta vacio, detengo el recogedor
         
@@ -573,7 +556,7 @@ public class Robot extends TimedRobot {
         
     } 
     
-    private void descargador(){
+    private void robot_descargando(){
         // SI DISPONIBLE: solo sacar
         // SI NO DISPONIBLE: bajar hasta que haya disponible; solo si ya habia pelotas
 
@@ -613,7 +596,6 @@ public class Robot extends TimedRobot {
             if (ascensorActivo == false) { // ya esta apagado
                 ascensorActivo = true; // corriendo
                 activar_ascensor();
-                robot_recargando();
                 
             } else {
                 detener_recogedor();
@@ -629,7 +611,6 @@ public class Robot extends TimedRobot {
 
             if (descargaActivo == false) { // ya esta apagado
                 activar_descarga();
-                robot_descargando();
                 
             } else {
                 detener_correa();
@@ -643,9 +624,7 @@ public class Robot extends TimedRobot {
         if (AssistantDriver.getAButtonPressed()) {
             if (bajandoActivo == false) { // ya esta apagado
                 bajandoActivo = true; // corriendo
-                activar_bajando();
-                correa_bajando();
-                recogedor_saliendo();
+                activar_botando_continuo();
                 
             } else {
                 detener_correa();
@@ -658,9 +637,7 @@ public class Robot extends TimedRobot {
     private void subiendo_boton_2Y() {
         if (AssistantDriver.getYButtonPressed()) {
             if (!subiendoActivo) {
-                activar_subiendo();
-                correa_subiendo();
-                recogedor_entrando();
+                activar_recogiendo_continuo();
             } else {
                 detener_correa();
                 detener_recogedor();
@@ -674,8 +651,7 @@ public class Robot extends TimedRobot {
             if (shooterActivo == true) {
                 shooterActivo = false;
                 activar_shooter_encendido();
-                shooter_encendido();
-                
+
             } else {
                 shooterActivo = true;
             }
@@ -688,7 +664,6 @@ public class Robot extends TimedRobot {
                 activar_robot_alineandose();
                 /* Esta Accion no puede estar dentro del metodo para Activar el estado */
                 // alinear_con_camara();
-                robot_alineandose();
             } else { // Salir del estado
                 // detener_robot();
                 alineandoActivo = false;
@@ -698,11 +673,10 @@ public class Robot extends TimedRobot {
 
     }
 
-    private void dosificador_separando_boton_2B() {
+    private void dosificar_boton_2B() {
         if(AssistantDriver.getBButton()){
             if (separadorActivo == false) {
-                activar_separando();
-                separando();
+                activar_dosificar();
                 
             } else if (separadorActivo == true) {
                 detener_dosificador();
@@ -731,7 +705,6 @@ public class Robot extends TimedRobot {
         if (ControlDriver.getBButtonPressed()) {
             if (dispararDosificadorActivo == false) { // Entrar al estado
                 activar_disparar_dosificador();
-                dosifcador_disparando();
                 
             }
             else{
@@ -740,14 +713,14 @@ public class Robot extends TimedRobot {
         }
     }
  
-    private void solenoid_boton_A(){
+    private void cambiar_angulo_shooter_boton_A(){
         if(ControlDriver.getAButtonPressed()){
             if(solenoidActivo == false){
                 solenoidActivo = true;
-                Solenoid(true);
+                cambiar_angulo_shooter(true);
             }
             else {
-                Solenoid(false);
+                cambiar_angulo_shooter(false);
                 solenoidActivo = false;
             }
         }
@@ -798,7 +771,7 @@ public class Robot extends TimedRobot {
         dosificadorMotor.set(ControlMode.PercentOutput, vel);
     }
     
-    private void disparar_dosificador(){
+    private void dosifcador_disparando(){
             if(dispararDosificadorActivo == true){
         
                 // Aumenta el contador
@@ -874,7 +847,7 @@ public class Robot extends TimedRobot {
     }
 
     /* ------ METODOS NEUMATICA ------- */
-    public void initNeumatics() {
+    public void iniciar_neumatica() {
         mainCompressor.setClosedLoopControl(true);
         // Compressor.setClosedLoopControl(false);
         enabled = mainCompressor.enabled();
@@ -883,7 +856,7 @@ public class Robot extends TimedRobot {
         current = mainCompressor.getCompressorCurrent();
     }
     
-    public void Solenoid(boolean val){
+    public void cambiar_angulo_shooter(boolean val){
         if(val){
             shooterSolenoid.set(Value.kForward);
         }
@@ -951,7 +924,7 @@ public class Robot extends TimedRobot {
         if (Math.abs(combinacionVelocidadPos) >= 0.0 || Math.abs(combinacionVelocidadNeg) >= 0.0) {
             acelerar_robot(combinacionVelocidadPos, combinacionVelocidadNeg);
         } else if(Math.abs(combinacionVelocidadPos) == 0.0 && Math.abs(combinacionVelocidadNeg) == 0.0 && shooterActivo){
-            dispararDosificadorActivo = true;
+            dosifcador_disparando();
         } else {
             alineandoActivo = false;
             shooterActivo = false;
