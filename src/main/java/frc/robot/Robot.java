@@ -250,7 +250,7 @@ public class Robot extends TimedRobot {
         subiendo_boton_2Y();
         camara_alineando_boton_2X(); // Siguiendo mismo estilo
         bajando_boton_2A();
-        dosificar_boton_2B();
+        correr_dosificador_boton_2B();
 
         // ----------- REVISAR TAREAS Y ESTADOS -----------
         
@@ -296,7 +296,7 @@ public class Robot extends TimedRobot {
             recogedor_saliendo();
         }
         if(separadorActivo){
-            separando();
+            correr_dosificador();
         }
 
         mover_con_joysticks();        
@@ -329,7 +329,7 @@ public class Robot extends TimedRobot {
         alinear_con_camara();
     }
 
-    private void separando(){
+    private void correr_dosificador(){
         acelerar_dosificador(-0.3*VEL_Dosificador);
     }
 
@@ -673,7 +673,7 @@ public class Robot extends TimedRobot {
 
     }
 
-    private void dosificar_boton_2B() {
+    private void correr_dosificador_boton_2B() {
         if(AssistantDriver.getBButton()){
             if (separadorActivo == false) {
                 activar_dosificar();
