@@ -814,7 +814,7 @@ public class Robot extends TimedRobot {
     /* ------- METODOS PARA MOVER EL ROBOT ----- */
     private void mover_con_joysticks(){
         if (drivetrainBloqueado){
-            acelerar_robot(ControlDriver.getY(Hand.kLeft) * -1, ControlDriver.getY(Hand.kRight));
+            acelerar_robot(ControlDriver.getY(Hand.kLeft) * -0.5, ControlDriver.getY(Hand.kRight)* 0.5);
         }
     }
     
@@ -823,10 +823,18 @@ public class Robot extends TimedRobot {
     }
 
     private void acelerar_robot(double vel_left, double vel_right) {
-        leftBackDrive.set(ControlMode.PercentOutput, vel_left ) ;
+        if(invertirActivo){
+        leftBackDrive.set(ControlMode.PercentOutput, vel_left);
         leftFrontDrive.set(ControlMode.PercentOutput, vel_left);
         rightBackDrive.set(ControlMode.PercentOutput, vel_right);
         rightFrontDrive.set(ControlMode.PercentOutput, vel_right);
+        } else {
+        leftBackDrive.set(ControlMode.PercentOutput, vel_right);
+        leftFrontDrive.set(ControlMode.PercentOutput, vel_right);
+        rightBackDrive.set(ControlMode.PercentOutput, vel_left);
+        rightFrontDrive.set(ControlMode.PercentOutput, vel_left);
+        }
+
     }
 
     private void girar_robot(double v) {
