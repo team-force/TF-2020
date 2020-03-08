@@ -120,12 +120,10 @@ public class Robot extends TimedRobot {
 
     // ----------------- VARIABLES ---------------//
 
-    // Banderas (variables) para indicar estados activos
+    /* --- BANDERAS PARA ESTADOS --- */
     private boolean subiendoActivo = false;
     private boolean bajandoActivo = false;
     private boolean shooterActivo = false;
-    private boolean detenidoActivo = true;
-    private boolean soltandoActivo = false;
     private boolean alineandoDistanciaActivo = false;
     private boolean alineandoActivo = false;
     private boolean dispararDosificadorActivo = false; //indica si activado
@@ -134,12 +132,15 @@ public class Robot extends TimedRobot {
     private boolean descargaActivo = false;
     private boolean recogedorSaliendoActivo = false;
 
-    // Banderas (variables) para indicar situacion de componentes especificos
+    /* --- INDICADORES  --- */
+
     // Indica si un estado esta bloqueando el uso del drivetrain (por el Driver)
     private boolean drivetrainBloqueado = false;
+
     // Indica si se esta manejando (el Driver) con los motores invertidos
     // TODO: Asegurarse que todo lo demas que mueve el vehiculo lo revise
     private boolean motoresInvertidos = false;
+
     // Indica si el shooter esta inclinado a 45 grados u horizontal.
     private boolean shooterInclinado = false;
 
@@ -211,20 +212,36 @@ public class Robot extends TimedRobot {
         //detector();
 
 
+        /* --- Mostrar Estados en Dashboard --- */
+        // De Torreta
         SmartDashboard.putBoolean("ASCENSOR", ascensorActivo);
         SmartDashboard.putBoolean("DESCARGA", descargaActivo);
-        SmartDashboard.putBoolean("DOSIFICADOR", dosificadorActivo);
         SmartDashboard.putBoolean("Subiendo", subiendoActivo);
         SmartDashboard.putBoolean("Bajando", bajandoActivo);
-        SmartDashboard.putBoolean("Shooter", shooterActivo);
-        SmartDashboard.putBoolean("Alineando", alineandoActivo);
 
+        // De Disparador
+        SmartDashboard.putBoolean("DOSIFICADOR", dosificadorActivo);
+        SmartDashboard.putBoolean("Shooter", shooterActivo);
+
+        // De Movimiento
+        SmartDashboard.putBoolean("Alineando", alineandoActivo);
+      
+        /* --- Mostrar Indicadores --- */
+        // De Torreta
         SmartDashboard.putBoolean("Cargado", ascensorCargado);
         SmartDashboard.putBoolean("Disponible", pelotaDisponible);
         SmartDashboard.putBoolean("Pelota 1", !sensorAbajo.get());
         SmartDashboard.putBoolean("Pelota 2", !sensorMedio.get());
         SmartDashboard.putBoolean("Pelota 3", !sensorArriba.get());
-        SmartDashboard.putBoolean("Invert", motoresInvertidos);
+
+        // De Disparador
+
+        // De Movimiento
+        SmartDashboard.putBoolean("M Invertidos", motoresInvertidos);
+        SmartDashboard.putBoolean("Drivetrain Bloqueado", drivetrainBloqueado);
+
+
+
     }
 
     @Override
@@ -368,7 +385,7 @@ public class Robot extends TimedRobot {
     }
 
     private void shooter_encendido() {
-        alinear_con_camara();
+        acelerar_shooter(VEL_SHOOTER);
     }
 
 
@@ -389,8 +406,6 @@ public class Robot extends TimedRobot {
         subiendoActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        detenidoActivo = false; // Se queda????
-        soltandoActivo = false;
         alineandoActivo = false;
 
         alineandoDistanciaActivo = false;
@@ -406,7 +421,6 @@ public class Robot extends TimedRobot {
     }
 
     private void activar_robot_detenido() {
-        detenidoActivo = true;
 
         shooterActivo = false;
         subiendoActivo = false;
@@ -427,15 +441,12 @@ public class Robot extends TimedRobot {
         // alineandoDistanciaActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        detenidoActivo = false;
     }
 
     private void activar_subiendo(){
         subiendoActivo = true;
 
         bajandoActivo = false;
-        detenidoActivo = false; // Se queda????
-        soltandoActivo = false;
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
 
@@ -447,8 +458,6 @@ public class Robot extends TimedRobot {
         bajandoActivo = true;
 
         subiendoActivo = false;
-        detenidoActivo = false; // Se queda????
-        soltandoActivo = false;
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
 
@@ -461,8 +470,6 @@ public class Robot extends TimedRobot {
         subiendoActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        detenidoActivo = false; // Se queda????
-        soltandoActivo = false;
         motoresInvertidos = false;
         drivetrainBloqueado = false;
 
@@ -480,7 +487,6 @@ public class Robot extends TimedRobot {
         subiendoActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        soltandoActivo = false;
         alineandoActivo = false;
         dosificadorActivo = false;
         ascensorActivo = false;
@@ -492,7 +498,6 @@ public class Robot extends TimedRobot {
         subiendoActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        soltandoActivo = false;
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
         ascensorActivo = false;
@@ -503,8 +508,6 @@ public class Robot extends TimedRobot {
         subiendoActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        detenidoActivo = false; // Se queda????
-        soltandoActivo = false;
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
         descargaActivo = false;
@@ -515,7 +518,6 @@ public class Robot extends TimedRobot {
         subiendoActivo = false;
         bajandoActivo = false;
         shooterActivo = false;
-        soltandoActivo = false;
 
         dispararDosificadorActivo = false;
 
@@ -970,11 +972,8 @@ public class Robot extends TimedRobot {
 
         if (Math.abs(combinacionVelocidadPos) >= 0.0 || Math.abs(combinacionVelocidadNeg) >= 0.0) {
             acelerar_robot(combinacionVelocidadPos, combinacionVelocidadNeg);
-        } else if(Math.abs(combinacionVelocidadPos) == 0.0 && Math.abs(combinacionVelocidadNeg) == 0.0 && shooterActivo){
-            dosificador_disparando();
         } else {
-            alineandoActivo = false;
-            shooterActivo = false;
+            alineandoActivo = false; // Es poco probable que salga (ambos en == 0.0)
         }
 
     }
