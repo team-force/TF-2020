@@ -823,16 +823,16 @@ public class Robot extends TimedRobot {
     }
 
     private void acelerar_robot(double vel_left, double vel_right) {
-        if(invertirActivo){
+        if(!invertirActivo){
         leftBackDrive.set(ControlMode.PercentOutput, vel_left);
         leftFrontDrive.set(ControlMode.PercentOutput, vel_left);
         rightBackDrive.set(ControlMode.PercentOutput, vel_right);
         rightFrontDrive.set(ControlMode.PercentOutput, vel_right);
         } else {
-        leftBackDrive.set(ControlMode.PercentOutput, vel_right);
-        leftFrontDrive.set(ControlMode.PercentOutput, vel_right);
-        rightBackDrive.set(ControlMode.PercentOutput, vel_left);
-        rightFrontDrive.set(ControlMode.PercentOutput, vel_left);
+        leftBackDrive.set(ControlMode.PercentOutput, vel_right * -1);
+        leftFrontDrive.set(ControlMode.PercentOutput, vel_right * -1);
+        rightBackDrive.set(ControlMode.PercentOutput, vel_left * -1);
+        rightFrontDrive.set(ControlMode.PercentOutput, vel_left * -1);
         }
 
     }
