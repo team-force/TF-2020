@@ -834,7 +834,6 @@ public class Robot extends TimedRobot {
         rightBackDrive.set(ControlMode.PercentOutput, vel_left * -1);
         rightFrontDrive.set(ControlMode.PercentOutput, vel_left * -1);
         }
-
     }
 
     private void girar_robot(double v) {
