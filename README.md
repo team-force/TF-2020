@@ -20,15 +20,15 @@ Los estados son combinaciones de acciones y otros estados que se ejecutan segun 
 ## De las pelotas
 
 ### recogedor
-- recogedor entrando (entrar pelota)
-- recogedor saliendo (sacar pelota)
+- recogedor entrando
+- recogedor saliendo
 - acelerar recogedor
 - detener recogedor
 
 
 ### correa
-- correa subiendo (subir pelotas)
-- correa bajando (bajar pelotas)
+- correa subiendo
+- correa bajando
 - detener correa
 - acelerar correa
 
@@ -36,7 +36,7 @@ Los estados son combinaciones de acciones y otros estados que se ejecutan segun 
 ## Del disparador
 - acelerar shooter
 - detener shooter 
-- Separando (Dosificar)
+- Correr dosificador
 - acelerar dosificador
 - detener dosificador
 
@@ -49,8 +49,8 @@ Los estados son combinaciones de acciones y otros estados que se ejecutan segun 
 
 
 ### Neumaticas
-- initNeumatics (iniciar neumatica)
-- Solenoid (cambiar angulo shooter)
+- iniciar neumatica
+- cambiar angulo shooter
 
 
 ## Estados 
@@ -60,29 +60,26 @@ La ejecucion de acciones o serie de acciones para poner al robot a actuar de cie
 - Activar robot detenido 
 - activar shooter encendido
 - activar recogedor saliendo
-- activar subiendo (recogiendo continuo)
-- activar bajando (botando continuo)
+- activar recogiendo continuo
+- activar botando continuo
 - activar robot alineandose
 - activar disparar dosificador
 - activar descarga
 - activar ascensor
-- activar separando (activando dosificar)
+- activar dosificar
 - activar invertir
 - robot detenido (probablemente no sea necesario)
 ### Botar pelotas
-- robot descargando (eliminar metodo)
-- descargador (robot descargando)
+- robot descargando
 ### Tirar una pelota
 -disparar dosificador
 ### Cargar una pelota
 ### Recoger y ordenar
-- robot recargando (eliminar metodo)
-- ascensor (robot recargando)
+- robot recargando
 ### Recoger sin ordenar
 
 ### Dosificador
-- dosificador disparando (eliminar metodo)
-- disparar dosificador (dosificador disparando)
+- dosificador disparando
 
 ## Tarea 
 La ejecucion de una serie de estados y acciones para lograr algo en especifico con el robot, sin permitir otra cosa que no sea lo establecido en la tarea. Hay un objetivo.
