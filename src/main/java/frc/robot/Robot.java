@@ -67,9 +67,9 @@ public class Robot extends TimedRobot {
 
     // Constantes
     final double VEL_CORREA = 0.25;
-    final double VEL_SHOOTER = 0.80;
+    final double VEL_SHOOTER = 0.8;
     final double VEL_RECOGEDOR = 0.25;
-    final double VEL_DOSIFICADOR= 0.6;
+    final double VEL_DOSIFICADOR= 0.65;
 
     private BajandoPelotas bajandoPelotas;
 
@@ -108,6 +108,7 @@ public class Robot extends TimedRobot {
 
     private Compressor mainCompressor = new Compressor(0);
     private DoubleSolenoid shooterSolenoid = new DoubleSolenoid(2, 3);
+    private DoubleSolenoid transmissionSolenoid = new DoubleSolenoid(0, 1);
     boolean enabled;
     boolean pressureSwitch;
     double current;
@@ -145,6 +146,8 @@ public class Robot extends TimedRobot {
 
     // Indica si el shooter esta inclinado a 45 grados u horizontal.
     private boolean shooterInclinado = false;
+
+    private boolean transmisionAlta = false;
 
     // private DifferentialDrive m_robotDrive;
     // private Joystick m_stick;
@@ -295,9 +298,10 @@ public class Robot extends TimedRobot {
         // ------------ LEER BOTONES ------------//
         // Del Control Princpipal (driver)
         invertir_motores_boton_Y(); // no finciona
-        shooter_encendido_boton_X(); // no funciona
+        // shooter_encendido_boton_X(); // no funciona
         cambiar_angulo_shooter_boton_A();
-        recogedor_saliendo_boton_y();
+        
+        // recogedor_saliendo_boton_y();
         detener_estados_boton_back();
         descarga_boton_L1();
         ascensor_boton_R1();
@@ -307,6 +311,8 @@ public class Robot extends TimedRobot {
         subiendo_boton_2Y();
         bajando_boton_2A();
         correr_dosificador_boton_2B();
+        // cambiar_transmision_boton_2X();
+        
 
         // ----------- REVISAR TAREAS Y ESTADOS -----------
 
@@ -734,6 +740,20 @@ public class Robot extends TimedRobot {
 
     }
 
+    private void cambiar_transmision_boton_2X(){
+        if(assistantDriver.getXButtonPressed()){
+            if (transmisionAlta == false) {
+                transmisionAlta = true;
+                transmision_alta(transmisionAlta);
+
+            } else {
+                transmisionAlta = false;
+                transmision_alta(transmisionAlta);
+
+            }
+        }
+    }
+
     private void correr_dosificador_boton_2B() {
         if(assistantDriver.getBButton()){
             if (dosificadorActivo == false) {
@@ -819,8 +839,8 @@ public class Robot extends TimedRobot {
     }
 
     private void acelerar_shooter(double vel) {
-        rightShooterMotor.set(ControlMode.PercentOutput, +vel);
-        leftShooterMotor.set(ControlMode.PercentOutput, -vel);
+        rightShooterMotor.set(ControlMode.PercentOutput, -vel);
+        leftShooterMotor.set(ControlMode.PercentOutput, vel);
     }
 
     private void detener_dosificador() {
@@ -874,7 +894,7 @@ public class Robot extends TimedRobot {
     /* ------- METODOS PARA MOVER EL ROBOT ----- */
     private void mover_con_joysticks(){
         if (!drivetrainBloqueado){
-            acelerar_robot(controlDriver.getY(Hand.kLeft) * -1, controlDriver.getY(Hand.kRight));
+            acelerar_robot(0.5*controlDriver.getY(Hand.kLeft) * -1, 0.5*controlDriver.getY(Hand.kRight));
         }
     }
 
@@ -885,8 +905,8 @@ public class Robot extends TimedRobot {
     private void acelerar_robot(double vel_left, double vel_right) {
         leftBackDrive.set(ControlMode.PercentOutput, vel_left ) ;
         leftFrontDrive.set(ControlMode.PercentOutput, vel_left);
-        rightBackDrive.set(ControlMode.PercentOutput, vel_right);
-        rightFrontDrive.set(ControlMode.PercentOutput, vel_right);
+        rightBackDrive.set(ControlMode.PercentOutput, -vel_right);
+        rightFrontDrive.set(ControlMode.PercentOutput, -vel_right);
     }
 
     private void girar_robot(double v) {
@@ -906,6 +926,14 @@ public class Robot extends TimedRobot {
         rightBackDrive.setInverted(val);
     }
 
+    private void transmision_alta(boolean alta){
+        if(alta){
+            transmissionSolenoid.set(Value.kForward); // to-do: verificar cual de los dos inclina
+        }
+        else {
+            transmissionSolenoid.set(Value.kReverse);
+        }
+    }
     /* ------ METODOS NEUMATICA ------- */
     public void iniciar_neumatica() {
         mainCompressor.setClosedLoopControl(true);
