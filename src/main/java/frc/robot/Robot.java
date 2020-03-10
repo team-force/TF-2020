@@ -68,7 +68,7 @@ public class Robot extends TimedRobot {
     // Constantes
     final double VEL_CORREA = 0.25;
     final double VEL_SHOOTER = 0.8;
-    final double VEL_RECOGEDOR = 0.25;
+    final double VEL_RECOGEDOR = 0.25; 
     final double VEL_DOSIFICADOR= 0.65;
 
     private BajandoPelotas bajandoPelotas;
@@ -356,6 +356,10 @@ public class Robot extends TimedRobot {
             // bajando_pelotas();
             bajandoPelotas.ejecutar();
         }
+        // } else {
+        //     detener_correa();
+        //     detener_recogedor();
+        // }
 
         /* Maquina para ejecuta estados no exclusivos */
         if(dosificadorActivo){
@@ -434,6 +438,7 @@ public class Robot extends TimedRobot {
         // Estados
         subiendoActivo = false;
         bajandoActivo = false;
+        bajandoPelotas.desactivar();
         shooterActivo = false;
         alineandoActivo = false;
 
@@ -456,6 +461,7 @@ public class Robot extends TimedRobot {
         alineandoActivo = false;
         // alineandoDistanciaActivo = false;
         bajandoActivo = false;
+        bajandoPelotas.desactivar();
         drivetrainBloqueado = false;
     }
 
@@ -469,6 +475,7 @@ public class Robot extends TimedRobot {
         alineandoActivo = false;
         // alineandoDistanciaActivo = false;
         bajandoActivo = false;
+        bajandoPelotas.desactivar();
         shooterActivo = false;
     }
 
@@ -476,6 +483,7 @@ public class Robot extends TimedRobot {
         subiendoActivo = true;
 
         bajandoActivo = false;
+		bajandoPelotas.desactivar();
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
 
@@ -498,6 +506,7 @@ public class Robot extends TimedRobot {
         alineandoActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
+		bajandoPelotas.desactivar();
         shooterActivo = false;
         motoresInvertidos = false;
         drivetrainBloqueado = false;
@@ -515,6 +524,7 @@ public class Robot extends TimedRobot {
         dispararDosificadorActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
+		bajandoPelotas.desactivar();
         shooterActivo = false;
         alineandoActivo = false;
         dosificadorActivo = false;
@@ -526,6 +536,7 @@ public class Robot extends TimedRobot {
         descargaActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
+		bajandoPelotas.desactivar();
         shooterActivo = false;
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
@@ -536,6 +547,7 @@ public class Robot extends TimedRobot {
         ascensorActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
+		bajandoPelotas.desactivar();
         shooterActivo = false;
         dispararDosificadorActivo = false;
         dosificadorActivo = false;
@@ -546,6 +558,7 @@ public class Robot extends TimedRobot {
         dosificadorActivo = true;
         subiendoActivo = false;
         bajandoActivo = false;
+		bajandoPelotas.desactivar();
         shooterActivo = false;
 
         dispararDosificadorActivo = false;
@@ -655,10 +668,8 @@ public class Robot extends TimedRobot {
 
     private void ascensor_boton_R1() {
         if (controlDriver.getBumperPressed(Hand.kRight)){
-            descargaActivo = false;
             if (ascensorActivo == false) { // ya esta apagado
                 activar_ascensor();
-                subiendoPelota = false;
 
             } else {
                 detener_recogedor();
@@ -671,6 +682,7 @@ public class Robot extends TimedRobot {
 
     private void descarga_boton_L1() {
         if(controlDriver.getBumperPressed(Hand.kLeft)){
+
             if (descargaActivo == false) { // ya esta apagado
                 activar_descarga();
 
@@ -690,11 +702,14 @@ public class Robot extends TimedRobot {
 
     private void bajando_boton_2A() {
         if (assistantDriver.getAButtonPressed()) {
-            // if (bajandoActivo == false) { // ya esta apagado
             if (!bajandoPelotas.estaActivo()){
                 // bajandoActivo = true; // corriendo
                 // activar_bajando();
                 bajandoPelotas.entrada();
+                // Deben ir en entrada()
+                ascensorActivo = false;
+                descargaActivo = false;
+                subiendoActivo = false;
 
             } else {
                 // detener_correa();
@@ -707,6 +722,11 @@ public class Robot extends TimedRobot {
 
     private void subiendo_boton_2Y() {
         if (assistantDriver.getYButtonPressed()) {
+            // Desactivar los demas (evita volver al anterior al desactivar)
+            ascensorActivo = false;
+            descargaActivo = false;
+            bajandoPelotas.desactivar();
+
             if (!subiendoActivo) {
                 activar_subiendo();
             } else {
