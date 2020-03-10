@@ -147,7 +147,13 @@ public class Robot extends TimedRobot {
     // Indica si el shooter esta inclinado a 45 grados u horizontal.
     private boolean shooterInclinado = false;
 
+    // Indica si la transmision esta en alta o baja
     private boolean transmisionAlta = false;
+
+    // Indica presencia de pelotas segun los sensores
+    private boolean pelotaArriba = false;
+    private boolean pelotaMedio = false;
+    private boolean pelotaAbajo = false;
 
     // private DifferentialDrive m_robotDrive;
     // private Joystick m_stick;
@@ -217,6 +223,11 @@ public class Robot extends TimedRobot {
     public void robotPeriodic() {
         //detector();
 
+        // Actualizar lecturas de pelotas
+        // TODO: Deberia ir aqui? (ayuda en desarrollo)        
+        pelotaAbajo = !sensorAbajo.get();
+        pelotaMedio = !sensorMedio.get();
+        pelotaArriba = !sensorArriba.get();
 
         /* --- Mostrar Estados en Dashboard --- */
         // De Torreta
@@ -237,9 +248,9 @@ public class Robot extends TimedRobot {
         SmartDashboard.putBoolean("Cargado", ascensorCargado);
         SmartDashboard.putBoolean("Subiendo Pelota", subiendoPelota);
         SmartDashboard.putBoolean("Disponible", pelotaDisponible);
-        SmartDashboard.putBoolean("Pelota 1", !sensorAbajo.get());
-        SmartDashboard.putBoolean("Pelota 2", !sensorMedio.get());
-        SmartDashboard.putBoolean("Pelota 3", !sensorArriba.get());
+        SmartDashboard.putBoolean("Pelota 1", pelotaAbajo);
+        SmartDashboard.putBoolean("Pelota 2", pelotaMedio);
+        SmartDashboard.putBoolean("Pelota 3", pelotaArriba);
 
         // De Disparador
 
@@ -247,7 +258,7 @@ public class Robot extends TimedRobot {
         SmartDashboard.putBoolean("M Invertidos", motoresInvertidos);
         SmartDashboard.putBoolean("Drivetrain Bloqueado", drivetrainBloqueado);
 
-
+        
 
     }
 
@@ -291,13 +302,15 @@ public class Robot extends TimedRobot {
 
 
         // ------------- LEER SENSORES -------- //
-        pelotaLista = !sensorArriba.get();
-        ascensorCargado = pelotaLista && !sensorMedio.get();
-        pelotaDisponible = !sensorAbajo.get(); //Pelota pelotaDisponible para subir
+        pelotaLista = pelotaArriba;
+        ascensorCargado = pelotaLista && pelotaMedio;
+        pelotaDisponible = pelotaAbajo; //Pelota pelotaDisponible para subir
 
         // ------------ LEER BOTONES ------------//
         // Del Control Princpipal (driver)
-        invertir_motores_boton_Y(); // no finciona
+        if(suma_de_los_valores_de_motores() == 0.0){
+            invertir_motores_boton_Y(); // no funciona
+        }
         // shooter_encendido_boton_X(); // no funciona
         cambiar_angulo_shooter_boton_A();
         
@@ -311,7 +324,9 @@ public class Robot extends TimedRobot {
         subiendo_boton_2Y();
         bajando_boton_2A();
         correr_dosificador_boton_2B();
-        // cambiar_transmision_boton_2X();
+        if(suma_de_los_valores_de_motores() == 0.0){
+            cambiar_transmision_boton_2X();
+        }
         
 
         // ----------- REVISAR TAREAS Y ESTADOS -----------
@@ -558,7 +573,7 @@ public class Robot extends TimedRobot {
         if (!ascensorCargado){
             if(pelotaDisponible ){
                 subiendoPelota = true;
-                if (!sensorMedio.get()){
+                if (pelotaMedio){
                     pelotaS2 = true;
                 } else {
                     pelotaS2 = false;
@@ -569,7 +584,7 @@ public class Robot extends TimedRobot {
         if (ascensorCargado && pelotaDisponible)
             subiendoPelota = false;
 
-        if(!sensorArriba.get()){
+        if(pelotaArriba){
             detener_dosificador();
         }
 
@@ -583,11 +598,11 @@ public class Robot extends TimedRobot {
             // Revisar si llego la que estaba subiendoPelota
             if (pelotaS2) // habia una y todavia esta
             {
-                pelotaS2 = !sensorMedio.get();
+                pelotaS2 = pelotaMedio;
                 acelerar_dosificador(0.20*VEL_DOSIFICADOR);
 
             } else {
-                subiendoPelota = sensorMedio.get();
+                subiendoPelota = !pelotaMedio;
             }
         } else {
             // detener correa
@@ -612,7 +627,7 @@ public class Robot extends TimedRobot {
         //TODO:  Usar un contador de pelotas (FIFO)
 
         boolean hayPelotas = false;
-        if (!sensorArriba.get() || !sensorMedio.get()){
+        if (pelotaArriba || pelotaMedio){
             hayPelotas = true;
         }
 
@@ -773,10 +788,10 @@ public class Robot extends TimedRobot {
         if (controlDriver.getYButtonPressed()) {
             if (motoresInvertidos == false) { // Entrar al estado
                 activar_invertir();
-                invertir_motores(true);
+                invertir_motores(motoresInvertidos);
             } else { // Salir del estado
                 motoresInvertidos = false;
-                invertir_motores(false);
+                invertir_motores(motoresInvertidos);
             }
         }
 
@@ -907,6 +922,14 @@ public class Robot extends TimedRobot {
         leftFrontDrive.set(ControlMode.PercentOutput, vel_left);
         rightBackDrive.set(ControlMode.PercentOutput, -vel_right);
         rightFrontDrive.set(ControlMode.PercentOutput, -vel_right);
+    }
+    private double suma_de_los_valores_de_motores(){
+        //Esto deberia usar Valor absoluto abs()
+
+        return Math.abs(leftBackDrive.getMotorOutputPercent()) + 
+            Math.abs(leftFrontDrive.getMotorOutputPercent()) + 
+            Math.abs(rightBackDrive.getMotorOutputPercent()) + 
+            Math.abs(rightFrontDrive.getMotorOutputPercent());
     }
 
     private void girar_robot(double v) {
