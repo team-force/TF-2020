@@ -638,7 +638,7 @@ public class Robot extends TimedRobot {
 
 
         //TODO:  Usar un contador de pelotas (FIFO)
-
+        //TODO: Subir el nivel del segundo sensor
         boolean hayPelotas = false;
         if (pelotaArriba || pelotaMedio){
             hayPelotas = true;
@@ -653,6 +653,11 @@ public class Robot extends TimedRobot {
             if (hayPelotas){
                 correa_bajando();
                 contadorDescargar = 80; // 1600ms @ 20ms
+                if (pelotaArriba){
+                    acelerar_dosificador(-0.5*VEL_DOSIFICADOR);
+                } else {
+                    detener_dosificador();
+                }
 
 
             } else if (contadorDescargar > 0){
@@ -660,6 +665,7 @@ public class Robot extends TimedRobot {
             } else {
                 detener_correa();
                 detener_recogedor();
+                detener_dosificador();
                 descargaActivo = false;
             }
         }
@@ -691,6 +697,7 @@ public class Robot extends TimedRobot {
             } else {
                 detener_correa();
                 detener_recogedor();
+                detener_dosificador();
                 descargaActivo = false;
             }
         }
