@@ -648,15 +648,17 @@ public class Robot extends TimedRobot {
             recogedor_saliendo();
             detener_correa();
             // bajando = false;
-            contadorDescargar = 80; // 500ms @ 20ms
+            contadorDescargar = 80; // 1600ms @ 20ms
         } else {
             if (hayPelotas){
                 correa_bajando();
+                contadorDescargar = 80; // 1600ms @ 20ms
+
 
             } else if (contadorDescargar > 0){
                 contadorDescargar--;
             } else {
-
+                detener_correa();
                 detener_recogedor();
                 descargaActivo = false;
             }
@@ -670,7 +672,7 @@ public class Robot extends TimedRobot {
         if (controlDriver.getBumperPressed(Hand.kRight)){
             if (ascensorActivo == false) { // ya esta apagado
                 activar_ascensor();
-
+                subiendoPelota = false; // reiniciar
             } else {
                 detener_recogedor();
                 detener_correa();
